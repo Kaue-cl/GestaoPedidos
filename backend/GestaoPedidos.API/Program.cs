@@ -1,5 +1,7 @@
 using GestaoPedidos.API.Data;
 using Microsoft.EntityFrameworkCore;
+using GestaoPedidos.API.Repositories.Interfaces;
+using GestaoPedidos.API.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +12,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
+builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
