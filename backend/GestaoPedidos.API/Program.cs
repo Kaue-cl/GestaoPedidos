@@ -15,7 +15,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
-builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
+builder.Services.AddScoped<IProdutoService, ProdutoService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
