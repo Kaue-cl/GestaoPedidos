@@ -7,4 +7,6 @@ public class Produto
     public decimal Preco { get; set; }
     public int EstoqueAtual { get; set; }
     public bool Ativo { get; set; } = true;
+
+    public ICollection<ItemPedido> Itens { get; set; } = new List<ItemPedido>();
 }

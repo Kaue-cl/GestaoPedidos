@@ -7,4 +7,6 @@ public class Cliente
     public string Email { get; set; } = string.Empty;
     public string Telefone { get; set; } = string.Empty;
     public DateTime DataCriacao { get; set; } = DateTime.Now;
+
+    public ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();
 }
