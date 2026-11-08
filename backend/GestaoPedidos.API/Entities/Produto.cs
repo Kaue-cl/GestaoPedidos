@@ -8,5 +8,5 @@ public class Produto
     public int EstoqueAtual { get; set; }
     public bool Ativo { get; set; } = true;
 
-    public ICollection<ItemPedido> Itens { get; set; } = new List<ItemPedido>();
+    public ICollection<ItemPedido> ItensPedido { get; set; } = new List<ItemPedido>();
 }
