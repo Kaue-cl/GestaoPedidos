@@ -49,16 +49,24 @@ public class ClientesController : ControllerBase
     [ProducesResponseType(
         typeof(ClienteResponse),
         StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ClienteResponse>> Adicionar(
         [FromBody] CriarClienteRequest request)
     {
-        var cliente = await _clienteService.AdicionarAsync(request);
-        
-        return CreatedAtAction(
-            nameof(ObterPorId),
-            new { id = cliente.Id },
-            cliente
-        );
+        try
+        {
+            var cliente = await _clienteService.AdicionarAsync(request);
+            
+            return CreatedAtAction(
+                nameof(ObterPorId),
+                new { id = cliente.Id },
+                cliente
+            );
+        }
+        catch (EmailJaCadastradoException ex)
+        {
+            return Conflict(new { Message = ex.Message });
+        }
     }
 
     [HttpPut("{id:int}")]
@@ -67,6 +75,7 @@ public class ClientesController : ControllerBase
         StatusCodes.Status200OK)]
     [ProducesResponseType(
         StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
     public async Task<ActionResult<ClienteResponse>> Atualizar(
         int id,
         [FromBody] AtualizarClienteRequest request)
@@ -79,6 +88,10 @@ public class ClientesController : ControllerBase
         catch (ClienteNaoEncontradoException ex)
         {
             return NotFound(new { Message = ex.Message });
+        }
+        catch (EmailJaCadastradoException ex)
+        {
+            return Conflict(new { Message = ex.Message });
         }
     }
 

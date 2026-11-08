@@ -34,9 +34,13 @@ public class ClienteService : IClienteService
     public async Task<ClienteResponse> AdicionarAsync(
         CriarClienteRequest request)
     {
+        request.Email = request.Email.Trim();
+        await ValidarEmailUnicoAsync(request.Email);
+
         var cliente = ClienteMapper.toEntity(request);
 
         var clienteCriado = await _repository.AdicionarAsync(cliente);
+
         return ClienteMapper.toResponse(clienteCriado);
     }
 
@@ -46,6 +50,10 @@ public class ClienteService : IClienteService
     {
         var cliente = await _repository.ObterPorIdAsync(id)
             ?? throw new ClienteNaoEncontradoException(id);
+
+        request.Email = request.Email.Trim();
+
+        await ValidarEmailUnicoAsync(request.Email, id);
 
         ClienteMapper.UpdateEntity(request, cliente);
 
@@ -61,6 +69,21 @@ public class ClienteService : IClienteService
     
         await _repository.ExcluirAsync(cliente);
     }
+
+    private async Task ValidarEmailUnicoAsync(
+        string email,
+        int? ignorarClienteId = null)
+    {
+        var existe = await _repository.EmailExisteAsync(
+            email,
+            ignorarClienteId);
+
+        if (existe)
+        {
+            throw new EmailJaCadastradoException(email);
+        }
+    }
+    
 
 }
    

@@ -45,4 +45,14 @@ public class ClienteRepository : IClienteRepository
         _context.Clientes.Remove(cliente);
         await _context.SaveChangesAsync();
     }
+
+    public async Task<bool> EmailExisteAsync(string email, int? ignorarClienteId = null)
+    {
+        var emailNormalizado = email.Trim().ToLowerInvariant();
+
+        return await _context.Clientes.AnyAsync(c => 
+            c.Email.ToLower() == emailNormalizado &&
+            (!ignorarClienteId.HasValue || 
+            c.Id != ignorarClienteId.Value)); 
+    }
 }

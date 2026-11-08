@@ -9,5 +9,7 @@ public interface IClienteRepository
     Task<Cliente> AdicionarAsync(Cliente cliente);
     Task AtualizarAsync(Cliente cliente);
     Task ExcluirAsync(Cliente cliente);
-
+    Task<bool> EmailExisteAsync(
+        string email,
+        int? ignorarClienteId = null);
 }
