@@ -2,6 +2,8 @@ using GestaoPedidos.API.Data;
 using Microsoft.EntityFrameworkCore;
 using GestaoPedidos.API.Repositories.Interfaces;
 using GestaoPedidos.API.Repositories;
+using GestaoPedidos.API.Services.Interfaces;
+using GestaoPedidos.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
+builder.Services.AddScoped<IClienteService, ClienteService>();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
