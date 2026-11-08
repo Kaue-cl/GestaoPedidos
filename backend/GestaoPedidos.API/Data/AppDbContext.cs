@@ -62,5 +62,8 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ItemPedido>()
             .Property(i => i.Subtotal)
             .HasPrecision(18, 2);
+        
+        // Dados iniciais
+        DbInitializer.Seed(modelBuilder);
     }
 }

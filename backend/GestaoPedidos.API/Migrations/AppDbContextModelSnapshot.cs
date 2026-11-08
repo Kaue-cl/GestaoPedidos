@@ -41,6 +41,32 @@ namespace GestaoPedidos.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Clientes");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            DataCriacao = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "joao@exemplo.com",
+                            Nome = "João Silva",
+                            Telefone = "11999990001"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            DataCriacao = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "maria@exemplo.com",
+                            Nome = "Maria Oliveira",
+                            Telefone = "11999990002"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            DataCriacao = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Email = "pedro@exemplo.com",
+                            Nome = "Pedro Santos",
+                            Telefone = "11999990003"
+                        });
                 });
 
             modelBuilder.Entity("GestaoPedidos.API.Entities.ItemPedido", b =>
@@ -126,6 +152,48 @@ namespace GestaoPedidos.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Produtos");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Ativo = true,
+                            EstoqueAtual = 10,
+                            Nome = "Notebook Dell",
+                            Preco = 3500.00m
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Ativo = true,
+                            EstoqueAtual = 25,
+                            Nome = "Mouse Logitech",
+                            Preco = 120.00m
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Ativo = true,
+                            EstoqueAtual = 15,
+                            Nome = "Teclado Mecânico",
+                            Preco = 250.00m
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Ativo = true,
+                            EstoqueAtual = 8,
+                            Nome = "Monitor 24 polegadas",
+                            Preco = 900.00m
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Ativo = true,
+                            EstoqueAtual = 20,
+                            Nome = "Headset Gamer",
+                            Preco = 180.00m
+                        });
                 });
 
             modelBuilder.Entity("GestaoPedidos.API.Entities.ItemPedido", b =>
