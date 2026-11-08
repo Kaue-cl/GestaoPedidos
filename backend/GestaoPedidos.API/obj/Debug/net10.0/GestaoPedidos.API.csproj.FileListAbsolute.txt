@@ -31,3 +31,4 @@ C:\Dev\GestaoPedidos\backend\GestaoPedidos.API\obj\Debug\net10.0\refint\GestaoPe
 C:\Dev\GestaoPedidos\backend\GestaoPedidos.API\obj\Debug\net10.0\GestaoPedidos.API.pdb
 C:\Dev\GestaoPedidos\backend\GestaoPedidos.API\obj\Debug\net10.0\GestaoPedidos.API.genruntimeconfig.cache
 C:\Dev\GestaoPedidos\backend\GestaoPedidos.API\obj\Debug\net10.0\ref\GestaoPedidos.API.dll
+C:\Dev\GestaoPedidos\backend\GestaoPedidos.API\obj\Debug\net10.0\GestaoPedidos.API.sourcelink.json
