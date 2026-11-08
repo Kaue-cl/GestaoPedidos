@@ -1,3 +1,4 @@
+using GestaoPedidos.API.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestaoPedidos.API.Data;
@@ -8,4 +9,6 @@ public class AppDbContext : DbContext
         : base(options)
     {
     }
+    
+    public DbSet<Cliente> Clientes { get; set; }
 }
