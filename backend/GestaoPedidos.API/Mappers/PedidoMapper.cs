@@ -14,6 +14,7 @@ public static class PedidoMapper
             DataPedido = pedido.DataPedido,
             Status = pedido.Status,
             ValorTotal = pedido.ValorTotal,
+            ClienteNome = pedido.Cliente?.Nome ?? string.Empty,
 
             Itens = pedido.Itens
                 .Select(ParaItemResponse)

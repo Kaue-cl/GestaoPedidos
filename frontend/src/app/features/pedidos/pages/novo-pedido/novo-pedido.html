@@ -140,7 +140,7 @@
             <a mat-stroked-button routerLink="/pedidos">
               Cancelar
             </a>
-
+            
             <button
               mat-flat-button
               class="btn-criar-pedido"
@@ -151,11 +151,14 @@
               @if (salvando()) {
                 <span>Salvando...</span>
               } @else {
-                <mat-icon>check</mat-icon>
-                <span>Criar pedido</span>
+                <ng-container>
+                  <mat-icon>check</mat-icon>
+                  <span>Criar pedido</span>
+                </ng-container>
               }
-            
+
             </button>
+
           </div>
 
         </div>

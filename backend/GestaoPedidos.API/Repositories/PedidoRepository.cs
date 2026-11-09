@@ -20,6 +20,7 @@ public class PedidoRepository : IPedidoRepository
     public async Task<Pedido?> ObterPorIdAsync(int id)
     {
         return await _context.Pedidos
+            .Include(p => p.Cliente)
             .Include(p => p.Itens)
             .FirstOrDefaultAsync(p => p.Id == id);
     }
@@ -52,6 +53,7 @@ public class PedidoRepository : IPedidoRepository
         FiltroPedidosRequest filtro)
     {
         IQueryable<Pedido> query = AplicarFiltros(filtro)
+         .Include(p => p.Cliente)
          .Include(p => p.Itens);
 
         var ascendente = filtro.Direcao == "asc";

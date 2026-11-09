@@ -29,6 +29,7 @@ export interface PedidoResponse {
   status: StatusPedido;
   valorTotal: number;
   itens: ItemPedidoResponse[];
+  clienteNome: string;
 }
 
 export interface PaginatedResponse<T> {

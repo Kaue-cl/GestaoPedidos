@@ -9,6 +9,6 @@ public class PedidoResponse
     public DateTime DataPedido { get; set; }
     public StatusPedido Status { get; set; }
     public decimal ValorTotal { get; set; }
-
     public List<ItemPedidoResponse> Itens { get; set; } = new();
+    public string ClienteNome { get; set; } = string.Empty;
 }
