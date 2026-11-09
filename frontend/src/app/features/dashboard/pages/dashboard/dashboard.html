@@ -1,0 +1,107 @@
+
+<div class="dashboard-container">
+
+  <div class="dashboard-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p>Visão geral da operação de pedidos</p>
+    </div>
+
+    <button
+      mat-stroked-button
+      (click)="carregarDashboard()"
+      [disabled]="carregando()">
+      <mat-icon>refresh</mat-icon>
+      Atualizar
+    </button>
+  </div>
+
+  @if (carregando()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48" />
+      <p>Carregando indicadores...</p>
+    </div>
+  } @else if (erro()) {
+    <div class="error-container">
+      <mat-icon>error_outline</mat-icon>
+      <h2>Não foi possível carregar o Dashboard</h2>
+      <p>Verifique a conexão com a API e tente novamente.</p>
+
+      <button mat-flat-button (click)="carregarDashboard()">
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (dados(); as dashboard) {
+
+    <div class="indicadores-grid">
+
+      <mat-card class="indicador-card">
+        <mat-card-content>
+          <div class="indicador-topo">
+            <span>Total de pedidos</span>
+            <mat-icon>shopping_cart</mat-icon>
+          </div>
+
+          <strong>{{ dashboard.totalPedidos | number }}</strong>
+          <p>Pedidos registrados</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="indicador-card">
+        <mat-card-content>
+          <div class="indicador-topo">
+            <span>Faturamento total</span>
+            <mat-icon>payments</mat-icon>
+          </div>
+
+          <strong>
+            {{ dashboard.faturamentoTotal | currency:'BRL' }}
+          </strong>
+          <p>Pedidos faturados</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="indicador-card">
+        <mat-card-content>
+          <div class="indicador-topo">
+            <span>Ticket médio</span>
+            <mat-icon>trending_up</mat-icon>
+          </div>
+
+          <strong>
+            {{ dashboard.ticketMedio | currency:'BRL' }}
+          </strong>
+          <p>Valor médio por pedido faturado</p>
+        </mat-card-content>
+      </mat-card>
+
+    </div>
+
+    <mat-card class="status-card">
+      <mat-card-header>
+        <mat-card-title>Pedidos por status</mat-card-title>
+        <mat-card-subtitle>
+          Distribuição dos pedidos registrados
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        @if (dashboard.pedidosPorStatus.length === 0) {
+          <p class="empty-message">
+            Nenhum pedido registrado.
+          </p>
+        } @else {
+          <div class="status-grid">
+            @for (item of dashboard.pedidosPorStatus; track item.status) {
+              <div class="status-item">
+                <span>{{ obterNomeStatus(item.status) }}</span>
+                <strong>{{ item.quantidade }}</strong>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+
+  }
+</div>
