@@ -35,6 +35,7 @@ public static class ProdutoMapper
         produto.Nome = request.Nome;
         produto.Preco = request.Preco;
         produto.EstoqueAtual = request.EstoqueAtual;
-        produto.Ativo = request.Ativo;
+        produto.Ativo = request.Ativo
+            ?? throw new ArgumentException("O status ativo é obrigatório.");
     }
 }
