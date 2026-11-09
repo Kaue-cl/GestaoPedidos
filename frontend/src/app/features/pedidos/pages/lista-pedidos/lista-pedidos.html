@@ -13,6 +13,88 @@
     </a>
   </div>
 
+  <mat-card class="filtros-card">
+    <mat-card-content>
+  
+      <div class="filtros-grid">
+  
+        <mat-form-field appearance="outline">
+          <mat-label>Status</mat-label>
+  
+          <mat-select
+            [ngModel]="filtroStatus()"
+            (ngModelChange)="filtroStatus.set($event)">
+  
+            <mat-option [value]="null">Todos</mat-option>
+  
+            @for (opcao of opcoesStatus; track opcao.valor) {
+              <mat-option [value]="opcao.valor">
+                {{ opcao.nome }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+  
+        <mat-form-field appearance="outline">
+          <mat-label>Cliente</mat-label>
+  
+          <input
+            matInput
+            placeholder="Buscar por nome"
+            [ngModel]="filtroCliente()"
+            (ngModelChange)="filtroCliente.set($event)"
+            (keyup.enter)="aplicarFiltros()">
+        </mat-form-field>
+  
+        <mat-form-field appearance="outline">
+          <mat-label>Ordenar por</mat-label>
+  
+          <mat-select
+            [ngModel]="ordenarPor()"
+            (ngModelChange)="ordenarPor.set($event)">
+  
+            <mat-option value="data">Data do pedido</mat-option>
+            <mat-option value="valor">Valor total</mat-option>
+          </mat-select>
+        </mat-form-field>
+  
+        <mat-form-field appearance="outline">
+          <mat-label>Direção</mat-label>
+  
+          <mat-select
+            [ngModel]="direcao()"
+            (ngModelChange)="direcao.set($event)">
+  
+            <mat-option value="desc">Decrescente</mat-option>
+            <mat-option value="asc">Crescente</mat-option>
+          </mat-select>
+        </mat-form-field>
+  
+      </div>
+  
+      <div class="filtros-acoes">
+        <button
+          mat-stroked-button
+          type="button"
+          [disabled]="carregando()"
+          (click)="limparFiltros()">
+          <mat-icon>filter_alt_off</mat-icon>
+          Limpar
+        </button>
+  
+        <button
+          mat-flat-button
+          type="button"
+          [disabled]="carregando()"
+          (click)="aplicarFiltros()">
+          <mat-icon>search</mat-icon>
+          Aplicar filtros
+        </button>
+      </div>
+  
+    </mat-card-content>
+  </mat-card>
+
   <mat-card class="tabela-card">
 
     @if (carregando()) {
@@ -96,6 +178,57 @@
             </td>
           </ng-container>
 
+          
+          <ng-container matColumnDef="acoes">
+            <th mat-header-cell *matHeaderCellDef>
+                Ações
+            </th>
+          
+            <td mat-cell *matCellDef="let pedido">
+            
+                @if (obterProximoStatus(pedido.status) !== null ||
+                    pedido.status === StatusPedido.Pendente) {
+                    
+                <button
+                    mat-icon-button
+                    [matMenuTriggerFor]="menuAcoes"
+                    [disabled]="processandoPedidoId() !== null"
+                    [attr.aria-label]="'Ações do pedido ' + pedido.id">
+                    <mat-icon>more_vert</mat-icon>
+                </button>
+            
+                <mat-menu #menuAcoes="matMenu">
+                
+                    @if (obterProximoStatus(pedido.status); as proximoStatus) {
+                    <button
+                        mat-menu-item
+                        (click)="atualizarStatus(pedido)">
+                        <mat-icon>sync_alt</mat-icon>
+                        <span>
+                        Alterar para {{ obterNomeStatus(proximoStatus) }}
+                        </span>
+                    </button>
+                    }
+                
+                    @if (pedido.status === StatusPedido.Pendente) {
+                    <button
+                        mat-menu-item
+                        (click)="cancelarPedido(pedido)">
+                        <mat-icon>cancel</mat-icon>
+                        <span>Cancelar pedido</span>
+                    </button>
+                    }
+                
+                </mat-menu>
+            
+                } @else {
+                <span class="sem-acoes">—</span>
+                }
+            
+            </td>
+          </ng-container>
+
+
           <tr
             mat-header-row
             *matHeaderRowDef="colunasExibidas">
@@ -124,6 +257,7 @@
         [pageSize]="tamanhoPagina()"
         [pageSizeOptions]="[5, 10, 25, 50]"
         [showFirstLastButtons]="true"
+        [disabled]="carregando() || processandoPedidoId() !== null"
         (page)="alterarPagina($event)">
       </mat-paginator>
 

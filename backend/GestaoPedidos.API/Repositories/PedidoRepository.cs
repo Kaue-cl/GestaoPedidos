@@ -4,6 +4,7 @@ using GestaoPedidos.API.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using GestaoPedidos.API.Exceptions;
 using GestaoPedidos.API.Enums;
+using GestaoPedidos.API.DTOs.Pedidos;
 
 namespace GestaoPedidos.API.Repositories;
 
@@ -23,23 +24,69 @@ public class PedidoRepository : IPedidoRepository
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    public async Task<List<Pedido>> ListarAsync(
-        int pagina,
-        int tamanhoPagina)
+    
+    private IQueryable<Pedido> AplicarFiltros(
+        FiltroPedidosRequest filtro)
     {
-        return await _context.Pedidos
-            .Include(p => p.Itens)
-            .OrderByDescending(p => p.DataPedido)
-            .ThenByDescending(p => p.Id)
-            .Skip((pagina - 1) * tamanhoPagina)
-            .Take(tamanhoPagina)
+        var query = _context.Pedidos.AsNoTracking().AsQueryable();
+
+        if (filtro.Status.HasValue)
+        {
+            query = query.Where(p => p.Status == filtro.Status.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtro.Cliente))
+        {
+            var nomeCliente = filtro.Cliente.Trim();
+
+            query = query.Where(p =>
+                _context.Clientes.Any(c =>
+                    c.Id == p.ClienteId &&
+                    EF.Functions.Like(c.Nome, $"%{nomeCliente}%")));
+        }
+
+        return query;
+    }
+
+    public async Task<List<Pedido>> ListarAsync(
+        FiltroPedidosRequest filtro)
+    {
+        IQueryable<Pedido> query = AplicarFiltros(filtro)
+         .Include(p => p.Itens);
+
+        var ascendente = filtro.Direcao == "asc";
+
+        query = filtro.OrdenarPor switch
+        {
+            "valor" when ascendente =>
+                query.OrderBy(p => p.ValorTotal)
+                    .ThenBy(p => p.Id),
+
+            "valor" =>
+                query.OrderByDescending(p => p.ValorTotal)
+                    .ThenByDescending(p => p.Id),
+
+            "data" when ascendente =>
+                query.OrderBy(p => p.DataPedido)
+                    .ThenBy(p => p.Id),
+
+            _ =>
+                query.OrderByDescending(p => p.DataPedido)
+                    .ThenByDescending(p => p.Id)
+        };
+
+        return await query
+            .Skip((filtro.Pagina - 1) * filtro.TamanhoPagina)
+            .Take(filtro.TamanhoPagina)
             .ToListAsync();
     }
 
-    public async Task<int> ContarAsync()
+    public async Task<int> ContarAsync(
+        FiltroPedidosRequest filtro)
     {
-        return await _context.Pedidos.CountAsync();
+        return await AplicarFiltros(filtro).CountAsync();
     }
+
 
     public async Task AdicionarAsync(Pedido pedido)
     {

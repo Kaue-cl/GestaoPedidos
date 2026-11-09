@@ -132,29 +132,60 @@ public class PedidoService : IPedidoService
         return PedidoMapper.ParaResponse(pedido);
     }
 
+    
     public async Task<List<PedidoResponse>> ListarAsync(
-    int pagina,
-    int tamanhoPagina)
+        FiltroPedidosRequest filtro)
     {
-        if (pagina < 1 || tamanhoPagina < 1 || tamanhoPagina > 100)
+        if (filtro.Pagina < 1 ||
+            filtro.TamanhoPagina < 1 ||
+            filtro.TamanhoPagina > 100)
         {
             throw new PedidoInvalidoException(
                 "A página deve ser maior que zero e o tamanho " +
                 "deve estar entre 1 e 100.");
         }
 
-        var pedidos = await _pedidoRepository
-            .ListarAsync(pagina, tamanhoPagina);
+        filtro.OrdenarPor = filtro.OrdenarPor?.Trim().ToLowerInvariant()
+            ?? "data";
+
+        filtro.Direcao = filtro.Direcao?.Trim().ToLowerInvariant()
+            ?? "desc";
+
+        if (filtro.OrdenarPor != "data" &&
+            filtro.OrdenarPor != "valor")
+        {
+            throw new PedidoInvalidoException(
+                "A ordenação deve ser por 'data' ou 'valor'.");
+        }
+
+        if (filtro.Direcao != "asc" &&
+            filtro.Direcao != "desc")
+        {
+            throw new PedidoInvalidoException(
+                "A direção deve ser 'asc' ou 'desc'.");
+        }
+
+        if (filtro.Status.HasValue &&
+            !Enum.IsDefined(typeof(StatusPedido), filtro.Status.Value))
+        {
+            throw new PedidoInvalidoException(
+                "Informe um status válido.");
+        }
+
+        filtro.Cliente = filtro.Cliente?.Trim();
+
+        var pedidos = await _pedidoRepository.ListarAsync(filtro);
 
         return pedidos
             .Select(PedidoMapper.ParaResponse)
             .ToList();
     }
 
-    public async Task<int> ContarAsync()
+    public async Task<int> ContarAsync(FiltroPedidosRequest filtro)
     {
-        return await _pedidoRepository.ContarAsync();
+        return await _pedidoRepository.ContarAsync(filtro);
     }
+
 
     public async Task<PedidoResponse> AtualizarStatusAsync(
     int id,

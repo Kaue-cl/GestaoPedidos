@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { FiltroPedidos } from '../models/pedido.model';
 
 import { environment } from '../../../../environments/environment';
 
@@ -26,19 +27,35 @@ export class PedidoService {
     );
   }
 
+  
   listar(
-    pagina: number = 1,
-    tamanhoPagina: number = 10
+    pagina = 1,
+    tamanhoPagina = 10,
+    filtros?: Partial<FiltroPedidos>
   ): Observable<PaginatedResponse<PedidoResponse>> {
-    const params = new HttpParams()
+  
+    let params = new HttpParams()
       .set('pagina', pagina.toString())
       .set('tamanhoPagina', tamanhoPagina.toString());
-
+  
+    if (filtros?.status !== undefined) {
+      params = params.set('status', filtros.status.toString());
+    }
+  
+    if (filtros?.cliente?.trim()) {
+      params = params.set('cliente', filtros.cliente.trim());
+    }
+  
+    params = params
+      .set('ordenarPor', filtros?.ordenarPor ?? 'data')
+      .set('direcao', filtros?.direcao ?? 'desc');
+  
     return this.http.get<PaginatedResponse<PedidoResponse>>(
       this.apiUrl,
       { params }
     );
   }
+
 
   buscarPorId(id: number): Observable<PedidoResponse> {
     return this.http.get<PedidoResponse>(

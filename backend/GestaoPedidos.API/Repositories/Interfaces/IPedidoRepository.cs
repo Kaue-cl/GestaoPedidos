@@ -1,4 +1,5 @@
 using GestaoPedidos.API.Entities;
+using GestaoPedidos.API.DTOs.Pedidos;
 
 namespace GestaoPedidos.API.Repositories.Interfaces;
 
@@ -6,11 +7,9 @@ public interface IPedidoRepository
 {
     Task<Pedido?> ObterPorIdAsync(int id);
 
-    Task<List<Pedido>> ListarAsync(
-        int pagina,
-        int tamanhoPagina);
+    Task<List<Pedido>> ListarAsync(FiltroPedidosRequest filtro);
 
-    Task<int> ContarAsync();
+Task<int> ContarAsync(FiltroPedidosRequest filtro);
 
     Task AdicionarAsync(Pedido pedido);
 

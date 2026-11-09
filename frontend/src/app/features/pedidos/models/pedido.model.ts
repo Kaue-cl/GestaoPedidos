@@ -38,3 +38,12 @@ export interface PaginatedResponse<T> {
   totalPaginas: number;
   dados: T[];
 }
+
+export interface FiltroPedidos {
+  pagina: number;
+  tamanhoPagina: number;
+  status?: StatusPedido;
+  cliente?: string;
+  ordenarPor: 'data' | 'valor';
+  direcao: 'asc' | 'desc';
+}

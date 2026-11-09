@@ -9,11 +9,9 @@ public interface IPedidoService
 
     Task<PedidoResponse> ObterPorIdAsync(int id);
 
-    Task<List<PedidoResponse>> ListarAsync(
-        int pagina,
-        int tamanhoPagina);
+    Task<List<PedidoResponse>> ListarAsync(FiltroPedidosRequest filtro);
 
-    Task<int> ContarAsync();
+    Task<int> ContarAsync(FiltroPedidosRequest filtro);
 
     Task<PedidoResponse> AtualizarStatusAsync(
         int id,

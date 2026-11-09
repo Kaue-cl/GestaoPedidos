@@ -27,27 +27,26 @@ public class PedidosController : ControllerBase
             pedido);
     }
 
+    
     [HttpGet]
     public async Task<IActionResult> Listar(
-        [FromQuery] int pagina = 1,
-        [FromQuery] int tamanhoPagina = 10)
+        [FromQuery] FiltroPedidosRequest filtro)
     {
-        var pedidos = await _pedidoService.ListarAsync(
-            pagina,
-            tamanhoPagina);
+        var pedidos = await _pedidoService.ListarAsync(filtro);
 
-        var totalRegistros = await _pedidoService.ContarAsync();
+        var totalRegistros = await _pedidoService.ContarAsync(filtro);
 
         return Ok(new
         {
-            pagina,
-            tamanhoPagina,
+            pagina = filtro.Pagina,
+            tamanhoPagina = filtro.TamanhoPagina,
             totalRegistros,
             totalPaginas = (int)Math.Ceiling(
-                (double)totalRegistros / tamanhoPagina),
+                (double)totalRegistros / filtro.TamanhoPagina),
             dados = pedidos
         });
     }
+
 
     [HttpGet("{id:int}")]
     public async Task<ActionResult<PedidoResponse>> ObterPorId(

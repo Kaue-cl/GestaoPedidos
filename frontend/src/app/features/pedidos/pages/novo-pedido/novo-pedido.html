@@ -143,17 +143,18 @@
 
             <button
               mat-flat-button
+              class="btn-criar-pedido"
               type="button"
               [disabled]="salvando() || itens().length === 0"
               (click)="criarPedido()">
-
+            
               @if (salvando()) {
-                Salvando...
+                <span>Salvando...</span>
               } @else {
                 <mat-icon>check</mat-icon>
-                Criar pedido
+                <span>Criar pedido</span>
               }
-
+            
             </button>
           </div>
 
