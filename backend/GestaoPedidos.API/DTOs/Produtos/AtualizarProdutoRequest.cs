@@ -9,7 +9,11 @@ public class AtualizarProdutoRequest
         ErrorMessage = "O nome deve ter entre 2 e 150 caracteres.")]
     public string Nome { get; set; } = string.Empty;
 
-    [Range(typeof(decimal), "0.01", "9999999999999999.99",
+    [Range(
+        typeof(decimal),
+        "0.01",
+        "9999999999999999.99",
+        ParseLimitsInInvariantCulture = true,
         ErrorMessage = "O preço deve ser maior que zero.")]
     public decimal Preco { get; set; }
 
