@@ -26,3 +26,22 @@
 
 #Logs
 Logs/
+
+
+# ==========================
+# Angular / Frontend
+# ==========================
+
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+frontend/coverage/
+
+# Logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Arquivos locais
+frontend/.env.local
+frontend/.env.*.local
