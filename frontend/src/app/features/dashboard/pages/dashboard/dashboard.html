@@ -5,16 +5,25 @@
     <div>
       <h1>Dashboard</h1>
       <p>Visão geral da operação de pedidos</p>
+  
+      @if (ultimaAtualizacao(); as atualizacao) {
+        <span class="ultima-atualizacao">
+          Atualizado às {{ atualizacao | date:'HH:mm:ss' }}
+          · Atualização automática a cada 30 segundos
+        </span>
+      }
     </div>
-
+  
     <button
       mat-stroked-button
+      type="button"
       (click)="carregarDashboard()"
       [disabled]="carregando()">
       <mat-icon>refresh</mat-icon>
       Atualizar
     </button>
   </div>
+
 
   @if (carregando()) {
     <div class="loading-container">
@@ -77,6 +86,7 @@
 
     </div>
 
+    
     <mat-card class="status-card">
       <mat-card-header>
         <mat-card-title>Pedidos por status</mat-card-title>
@@ -84,18 +94,31 @@
           Distribuição dos pedidos registrados
         </mat-card-subtitle>
       </mat-card-header>
-
+    
       <mat-card-content>
         @if (dashboard.pedidosPorStatus.length === 0) {
           <p class="empty-message">
             Nenhum pedido registrado.
           </p>
         } @else {
-          <div class="status-grid">
+          <div class="status-lista">
             @for (item of dashboard.pedidosPorStatus; track item.status) {
-              <div class="status-item">
-                <span>{{ obterNomeStatus(item.status) }}</span>
-                <strong>{{ item.quantidade }}</strong>
+              <div class="status-linha">
+                <div class="status-info">
+                  <span>{{ obterNomeStatus(item.status) }}</span>
+                  <strong>{{ item.quantidade }}</strong>
+                </div>
+    
+                <div class="barra-fundo">
+                  <div
+                    class="barra-preenchimento"
+                    [style.width.%]="calcularPercentual(item.quantidade)">
+                  </div>
+                </div>
+    
+                <span class="percentual">
+                  {{ calcularPercentual(item.quantidade) | number:'1.1-1' }}%
+                </span>
               </div>
             }
           </div>
@@ -103,5 +126,55 @@
       </mat-card-content>
     </mat-card>
 
+    <mat-card class="produtos-card">
+      <mat-card-header>
+        <mat-card-title>Produtos mais vendidos</mat-card-title>
+        <mat-card-subtitle>
+          Ranking dos cinco produtos com maior quantidade vendida
+        </mat-card-subtitle>
+      </mat-card-header>
+    
+      <mat-card-content>
+        @if (dashboard.produtosMaisVendidos.length === 0) {
+          <p class="empty-message">
+            Ainda não existem produtos vendidos.
+          </p>
+        } @else {
+          <div class="produtos-lista">
+            @for (
+              produto of dashboard.produtosMaisVendidos;
+              track produto.produtoId;
+              let posicao = $index
+            ) {
+              <div class="produto-linha">
+                <span class="produto-posicao">
+                  {{ posicao + 1 }}º
+                </span>
+    
+                <div class="produto-detalhes">
+                  <div class="produto-info">
+                    <strong>{{ produto.nome }}</strong>
+                    <span>
+                      {{ produto.quantidadeVendida }} unidades
+                    </span>
+                  </div>
+    
+                  <div class="barra-fundo">
+                    <div
+                      class="barra-preenchimento"
+                      [style.width.%]="calcularPercentualProduto(produto.quantidadeVendida)">
+                    </div>
+                  </div>
+                </div>
+    
+                <strong class="produto-valor">
+                  {{ produto.valorTotalVendido | currency:'BRL' }}
+                </strong>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
   }
 </div>
