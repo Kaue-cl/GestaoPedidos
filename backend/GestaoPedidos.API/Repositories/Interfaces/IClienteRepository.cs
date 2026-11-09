@@ -1,4 +1,5 @@
 using GestaoPedidos.API.Entities;
+using GestaoPedidos.API.DTOs.Clientes;
 
 namespace GestaoPedidos.API.Repositories.Interfaces;
 
@@ -12,4 +13,6 @@ public interface IClienteRepository
     Task<bool> EmailExisteAsync(
         string email,
         int? ignorarClienteId = null);
+    Task<(List<Cliente> Dados, int TotalRegistros)> ListarPaginadoAsync(
+        FiltroClientesRequest filtro);
 }

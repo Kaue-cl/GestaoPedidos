@@ -19,6 +19,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+import { FiltroProdutos } from '../../services/produto.service';
+
 import { ProdutoService } from '../../services/produto.service';
 import {
   ProdutoResponse,
@@ -43,7 +47,9 @@ import { Confirmacao } from '../../../../shared/components/confirmacao/confirmac
     MatCheckboxModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    MatPaginatorModule,
+    MatSelectModule
   ],
   templateUrl: './lista-produtos.html',
   styleUrl: './lista-produtos.scss'
@@ -62,6 +68,17 @@ export class ListaProdutos implements OnInit {
 
   readonly formularioAberto = signal(false);
   readonly produtoEmEdicao = signal<number | null>(null);
+
+  readonly paginaAtual = signal(0);
+  readonly tamanhoPagina = signal(10);
+  readonly totalRegistros = signal(0);
+
+  readonly filtros = this.fb.nonNullable.group({
+    nome: [''],
+    ativo: ['todos'],
+    ordenarPor: ['nome' as 'nome' | 'preco' | 'estoque'],
+    direcao: ['asc' as 'asc' | 'desc']
+  });
 
   readonly colunasExibidas = [
     'id',
@@ -94,16 +111,32 @@ export class ListaProdutos implements OnInit {
     this.carregando.set(true);
     this.erro.set(false);
 
-    this.produtoService.listar()
+    const valores = this.filtros.getRawValue();
+
+    const ativo = valores.ativo === 'todos'
+      ? null
+      : valores.ativo === 'ativos';
+
+    const filtro: FiltroProdutos = {
+      pagina: this.paginaAtual() + 1,
+      tamanhoPagina: this.tamanhoPagina(),
+      nome: valores.nome,
+      ativo,
+      ordenarPor: valores.ordenarPor,
+      direcao: valores.direcao
+    };
+
+    this.produtoService.listarPaginado(filtro)
       .pipe(finalize(() => this.carregando.set(false)))
       .subscribe({
-        next: produtos => {
-          console.log('Produtos recebidos:', produtos);
-          this.produtos.set(produtos);
+        next: resultado => {
+          this.produtos.set(resultado.dados);
+          this.totalRegistros.set(resultado.totalRegistros);
         },
         error: () => {
           this.erro.set(true);
           this.produtos.set([]);
+          this.totalRegistros.set(0);
         }
       });
   }
@@ -189,6 +222,7 @@ export class ListaProdutos implements OnInit {
           );
 
           this.cancelarFormulario();
+          this.paginaAtual.set(0);
           this.carregarProdutos();
         }
       });
@@ -223,9 +257,33 @@ export class ListaProdutos implements OnInit {
               { duration: 3000 }
             );
 
+            this.paginaAtual.set(0);
             this.carregarProdutos();
           }
         });
     });
+  }
+  
+  aplicarFiltros(): void {
+    this.paginaAtual.set(0);
+    this.carregarProdutos();
+  }
+
+  limparFiltros(): void {
+    this.filtros.reset({
+      nome: '',
+      ativo: 'todos',
+      ordenarPor: 'nome',
+      direcao: 'asc'
+    });
+
+    this.paginaAtual.set(0);
+    this.carregarProdutos();
+  }
+
+  alterarPagina(evento: PageEvent): void {
+    this.paginaAtual.set(evento.pageIndex);
+    this.tamanhoPagina.set(evento.pageSize);
+    this.carregarProdutos();
   }
 }

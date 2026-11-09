@@ -23,11 +23,12 @@ describe('ListaClientes', () => {
   };
 
   const clienteServiceMock = {
-    listar: vi.fn(),
-    criar: vi.fn(),
-    atualizar: vi.fn(),
-    excluir: vi.fn()
-  };
+  listar: vi.fn(),
+  listarPaginado: vi.fn(),
+  criar: vi.fn(),
+  atualizar: vi.fn(),
+  excluir: vi.fn()
+};
 
   const snackBarMock = {
     open: vi.fn()
@@ -42,7 +43,15 @@ describe('ListaClientes', () => {
   beforeEach(async () => {
     vi.resetAllMocks();
 
-    clienteServiceMock.listar.mockReturnValue(of([clienteMock]));
+    clienteServiceMock.listarPaginado.mockReturnValue(
+        of({
+          pagina: 1,
+          tamanhoPagina: 10,
+          totalRegistros: 1,
+          totalPaginas: 1,
+          dados: [clienteMock]
+        })
+      );
     clienteServiceMock.criar.mockReturnValue(of(clienteMock));
     clienteServiceMock.atualizar.mockReturnValue(of(undefined));
     clienteServiceMock.excluir.mockReturnValue(of(undefined));
@@ -91,7 +100,7 @@ describe('ListaClientes', () => {
   it('deve carregar os clientes ao inicializar', () => {
     fixture.detectChanges();
 
-    expect(clienteServiceMock.listar).toHaveBeenCalledTimes(1);
+    expect(clienteServiceMock.listarPaginado).toHaveBeenCalledTimes(1);
     expect(component.clientes()).toEqual([clienteMock]);
     expect(component.carregando()).toBe(false);
     expect(component.erro()).toBe(false);
@@ -148,7 +157,7 @@ describe('ListaClientes', () => {
 
     expect(component.formularioAberto()).toBe(false);
     expect(component.salvando()).toBe(false);
-    expect(clienteServiceMock.listar).toHaveBeenCalledTimes(2);
+    expect(clienteServiceMock.listarPaginado).toHaveBeenCalledTimes(2);
 
     expect(snackBarMock.open).toHaveBeenCalledWith(
       'Cliente cadastrado com sucesso.',
@@ -193,7 +202,7 @@ describe('ListaClientes', () => {
 
     expect(component.formularioAberto()).toBe(false);
     expect(component.salvando()).toBe(false);
-    expect(clienteServiceMock.listar).toHaveBeenCalledTimes(2);
+    expect(clienteServiceMock.listarPaginado).toHaveBeenCalledTimes(2);
 
     expect(snackBarMock.open).toHaveBeenCalledWith(
       'Cliente atualizado com sucesso.',
@@ -224,7 +233,7 @@ describe('ListaClientes', () => {
 
     expect(clienteServiceMock.excluir).toHaveBeenCalledWith(1);
     expect(component.excluindoId()).toBeNull();
-    expect(clienteServiceMock.listar).toHaveBeenCalledTimes(2);
+    expect(clienteServiceMock.listarPaginado).toHaveBeenCalledTimes(2);
 
     expect(snackBarMock.open).toHaveBeenCalledWith(
       'Cliente excluído com sucesso.',
@@ -234,7 +243,7 @@ describe('ListaClientes', () => {
   });
 
   it('deve tratar erros ao carregar clientes', () => {
-    clienteServiceMock.listar.mockReturnValue(
+    clienteServiceMock.listarPaginado.mockReturnValue(
       throwError(() => new Error('API indisponível'))
     );
 
@@ -243,5 +252,23 @@ describe('ListaClientes', () => {
     expect(component.erro()).toBe(true);
     expect(component.clientes()).toEqual([]);
     expect(component.carregando()).toBe(false);
+  });
+  
+  it('deve alterar a página e consultar os clientes paginados', () => {
+    component.alterarPagina({
+      pageIndex: 1,
+      pageSize: 5,
+      length: 20
+    });
+
+    expect(component.paginaAtual()).toBe(1);
+    expect(component.tamanhoPagina()).toBe(5);
+
+    expect(clienteServiceMock.listarPaginado).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        pagina: 2,
+        tamanhoPagina: 5
+      })
+    );
   });
 });

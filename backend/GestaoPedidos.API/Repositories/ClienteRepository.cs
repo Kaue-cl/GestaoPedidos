@@ -2,6 +2,7 @@ using GestaoPedidos.API.Entities;
 using GestaoPedidos.API.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using GestaoPedidos.API.Data;
+using GestaoPedidos.API.DTOs.Clientes;
 
 namespace GestaoPedidos.API.Repositories;
 
@@ -54,5 +55,47 @@ public class ClienteRepository : IClienteRepository
             c.Email.ToLower() == emailNormalizado &&
             (!ignorarClienteId.HasValue || 
             c.Id != ignorarClienteId.Value)); 
+    }
+
+    
+    
+    public async Task<(List<Cliente> Dados, int TotalRegistros)> ListarPaginadoAsync(FiltroClientesRequest filtro)
+    {
+        var query = _context.Clientes.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filtro.Nome))
+        {
+            var nome = filtro.Nome.Trim();
+            query = query.Where(c => c.Nome.Contains(nome));
+        }
+
+        if (!string.IsNullOrWhiteSpace(filtro.Email))
+        {
+            var email = filtro.Email.Trim();
+            query = query.Where(c => c.Email.Contains(email));
+        }
+
+        var totalRegistros = await query.CountAsync();
+
+        var descendente = filtro.Direcao.Equals(
+            "desc", StringComparison.OrdinalIgnoreCase);
+
+        query = filtro.OrdenarPor.ToLowerInvariant() switch
+        {
+            "data" => descendente
+                ? query.OrderByDescending(c => c.DataCriacao).ThenBy(c => c.Id)
+                : query.OrderBy(c => c.DataCriacao).ThenBy(c => c.Id),
+
+            _ => descendente
+                ? query.OrderByDescending(c => c.Nome).ThenBy(c => c.Id)
+                : query.OrderBy(c => c.Nome).ThenBy(c => c.Id)
+        };
+
+        var clientes = await query
+            .Skip((filtro.Pagina - 1) * filtro.TamanhoPagina)
+            .Take(filtro.TamanhoPagina)
+            .ToListAsync();
+
+        return (clientes, totalRegistros);
     }
 }

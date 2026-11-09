@@ -68,4 +68,33 @@ public class ProdutosController : ControllerBase
         await _produtoService.ExcluirAsync(id);
         return NoContent();
     }
+
+    [HttpGet("paginado")]
+    public async Task<IActionResult> ListarPaginado(
+        [FromQuery] FiltroProdutosRequest filtro)
+    {
+        if (filtro.Pagina < 1 ||
+            filtro.TamanhoPagina < 1 ||
+            filtro.TamanhoPagina > 100)
+        {
+            return BadRequest(new
+            {
+                mensagem = "Parâmetros de paginação inválidos."
+            });
+        }
+
+        if (!new[] { "nome", "preco", "estoque" }.Contains(
+                filtro.OrdenarPor.ToLowerInvariant()) ||
+            !new[] { "asc", "desc" }.Contains(
+                filtro.Direcao.ToLowerInvariant()))
+        {
+            return BadRequest(new
+            {
+                mensagem = "Parâmetros de ordenação inválidos."
+            });
+        }
+
+        var resultado = await _produtoService.ListarPaginadoAsync(filtro);
+        return Ok(resultado);
+    }
 }

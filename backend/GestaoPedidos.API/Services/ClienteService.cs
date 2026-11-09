@@ -3,6 +3,7 @@ using GestaoPedidos.API.Mappers;
 using GestaoPedidos.API.Exceptions;
 using GestaoPedidos.API.Repositories.Interfaces;
 using GestaoPedidos.API.Services.Interfaces;
+using GestaoPedidos.API.DTOs.Common;
 
 namespace GestaoPedidos.API.Services;
 
@@ -84,6 +85,20 @@ public class ClienteService : IClienteService
         }
     }
     
+    public async Task<PaginacaoResponse<ClienteResponse>> ListarPaginadoAsync(FiltroClientesRequest filtro)
+    {
+        var (clientes, totalRegistros) =
+            await _repository.ListarPaginadoAsync(filtro);
 
+        return new PaginacaoResponse<ClienteResponse>
+        {
+            Pagina = filtro.Pagina,
+            TamanhoPagina = filtro.TamanhoPagina,
+            TotalRegistros = totalRegistros,
+            TotalPaginas = (int)Math.Ceiling(
+                totalRegistros / (double)filtro.TamanhoPagina),
+            Dados = clientes.Select(ClienteMapper.toResponse).ToList()
+        };
+    }
 }
    

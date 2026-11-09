@@ -3,6 +3,7 @@ using GestaoPedidos.API.Exceptions;
 using GestaoPedidos.API.Mappers;
 using GestaoPedidos.API.Repositories.Interfaces;
 using GestaoPedidos.API.Services.Interfaces;
+using GestaoPedidos.API.DTOs.Common;
 
 namespace GestaoPedidos.API.Services;
 
@@ -81,5 +82,21 @@ public class ProdutoService : IProdutoService
             throw new ProdutoNaoEncontradoException(id);
 
         return produto.EstoqueAtual;
+    }
+
+    public async Task<PaginacaoResponse<ProdutoResponse>> ListarPaginadoAsync(FiltroProdutosRequest filtro)
+    {
+        var (produtos, totalRegistros) =
+            await _produtoRepository.ListarPaginadoAsync(filtro);
+
+        return new PaginacaoResponse<ProdutoResponse>
+        {
+            Pagina = filtro.Pagina,
+            TamanhoPagina = filtro.TamanhoPagina,
+            TotalRegistros = totalRegistros,
+            TotalPaginas = (int)Math.Ceiling(
+                totalRegistros / (double)filtro.TamanhoPagina),
+            Dados = produtos.Select(ProdutoMapper.ToResponse).ToList()
+        };
     }
 }

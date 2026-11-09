@@ -92,6 +92,58 @@
     </mat-card>
   }
 
+  <mat-card class="filtros-card">
+    <mat-card-content>
+      <form
+        [formGroup]="filtros"
+        (ngSubmit)="aplicarFiltros()">
+
+        <div class="filtros-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Buscar por nome</mat-label>
+            <input matInput formControlName="nome">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Buscar por e-mail</mat-label>
+            <input matInput formControlName="email">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Ordenar por</mat-label>
+            <mat-select formControlName="ordenarPor">
+              <mat-option value="nome">Nome</mat-option>
+              <mat-option value="data">Data de cadastro</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Direção</mat-label>
+            <mat-select formControlName="direcao">
+              <mat-option value="asc">Crescente</mat-option>
+              <mat-option value="desc">Decrescente</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filtros-acoes">
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="limparFiltros()">
+            Limpar filtros
+          </button>
+
+          <button mat-flat-button type="submit">
+            <mat-icon>search</mat-icon>
+            Filtrar
+          </button>
+        </div>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+
   <mat-card class="tabela-card">
     <mat-card-content>
 
@@ -113,7 +165,7 @@
       } @else if (clientes().length === 0) {
         <div class="estado">
           <mat-icon>people_outline</mat-icon>
-          <p>Nenhum cliente cadastrado.</p>
+          <p>Nenhum cliente encontrado para os filtros selecionados.</p>
         </div>
       } @else {
         <div class="tabela-container">
@@ -177,6 +229,15 @@
       }
 
     </mat-card-content>
+    <mat-paginator
+      [length]="totalRegistros()"
+      [pageIndex]="paginaAtual()"
+      [pageSize]="tamanhoPagina()"
+      [pageSizeOptions]="[5, 10, 25]"
+      [showFirstLastButtons]="true"
+      aria-label="Paginação de clientes"
+      (page)="alterarPagina($event)">
+    </mat-paginator>
   </mat-card>
 
 </div>

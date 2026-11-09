@@ -18,6 +18,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+import { FiltroClientes } from '../../services/cliente.service';
+
 import { ClienteService } from '../../services/cliente.service';
 import {
   ClienteResponse,
@@ -41,7 +45,9 @@ import { Confirmacao } from '../../../../shared/components/confirmacao/confirmac
     MatInputModule,
     MatProgressSpinnerModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    MatPaginatorModule,
+    MatSelectModule
   ],
   templateUrl: './lista-clientes.html',
   styleUrl: './lista-clientes.scss'
@@ -60,6 +66,17 @@ export class ListaClientes implements OnInit {
 
   readonly formularioAberto = signal(false);
   readonly clienteEmEdicao = signal<number | null>(null);
+
+  readonly paginaAtual = signal(0);
+  readonly tamanhoPagina = signal(10);
+  readonly totalRegistros = signal(0);
+
+  readonly filtros = this.fb.nonNullable.group({
+    nome: [''],
+    email: [''],
+    ordenarPor: ['nome' as 'nome' | 'data'],
+    direcao: ['asc' as 'asc' | 'desc']
+  });
 
   readonly colunasExibidas = [
     'id',
@@ -83,13 +100,28 @@ export class ListaClientes implements OnInit {
     this.carregando.set(true);
     this.erro.set(false);
 
-    this.clienteService.listar()
+    const valores = this.filtros.getRawValue();
+
+    const filtro: FiltroClientes = {
+      pagina: this.paginaAtual() + 1,
+      tamanhoPagina: this.tamanhoPagina(),
+      nome: valores.nome,
+      email: valores.email,
+      ordenarPor: valores.ordenarPor,
+      direcao: valores.direcao
+    };
+
+    this.clienteService.listarPaginado(filtro)
       .pipe(finalize(() => this.carregando.set(false)))
       .subscribe({
-        next: clientes => this.clientes.set(clientes),
+        next: resultado => {
+          this.clientes.set(resultado.dados);
+          this.totalRegistros.set(resultado.totalRegistros);
+        },
         error: () => {
           this.erro.set(true);
           this.clientes.set([]);
+          this.totalRegistros.set(0);
         }
       });
   }
@@ -149,6 +181,7 @@ export class ListaClientes implements OnInit {
           );
 
           this.cancelarFormulario();
+          this.paginaAtual.set(0);
           this.carregarClientes();
         }
       });
@@ -181,10 +214,34 @@ export class ListaClientes implements OnInit {
               'Fechar',
               { duration: 3000 }
             );
-
+            
+            this.paginaAtual.set(0);
             this.carregarClientes();
           }
         });
     });
+  }
+
+  aplicarFiltros(): void {
+    this.paginaAtual.set(0);
+    this.carregarClientes();
+  }
+
+  limparFiltros(): void {
+    this.filtros.reset({
+      nome: '',
+      email: '',
+      ordenarPor: 'nome',
+      direcao: 'asc'
+    });
+
+    this.paginaAtual.set(0);
+    this.carregarClientes();
+  }
+
+  alterarPagina(evento: PageEvent): void {
+    this.paginaAtual.set(evento.pageIndex);
+    this.tamanhoPagina.set(evento.pageSize);
+    this.carregarClientes();
   }
 }

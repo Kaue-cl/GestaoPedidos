@@ -30,6 +30,7 @@ describe('ListaProdutos', () => {
 
   const produtoServiceMock = {
     listar: vi.fn(),
+    listarPaginado: vi.fn(),
     criar: vi.fn(),
     atualizar: vi.fn(),
     excluir: vi.fn()
@@ -48,7 +49,15 @@ describe('ListaProdutos', () => {
   beforeEach(async () => {
     vi.resetAllMocks();
 
-    produtoServiceMock.listar.mockReturnValue(of([produtoMock]));
+    produtoServiceMock.listarPaginado.mockReturnValue(
+        of({
+          pagina: 1,
+          tamanhoPagina: 10,
+          totalRegistros: 1,
+          totalPaginas: 1,
+          dados: [produtoMock]
+        })
+      );
     produtoServiceMock.criar.mockReturnValue(of(produtoMock));
     produtoServiceMock.atualizar.mockReturnValue(of(undefined));
     produtoServiceMock.excluir.mockReturnValue(of(undefined));
@@ -100,7 +109,7 @@ describe('ListaProdutos', () => {
   it('deve carregar os produtos ao inicializar', () => {
     fixture.detectChanges();
 
-    expect(produtoServiceMock.listar).toHaveBeenCalledTimes(1);
+    expect(produtoServiceMock.listarPaginado).toHaveBeenCalledTimes(1);
     expect(component.produtos()).toEqual([produtoMock]);
     expect(component.carregando()).toBe(false);
     expect(component.erro()).toBe(false);
@@ -157,7 +166,7 @@ describe('ListaProdutos', () => {
     });
 
     expect(component.formularioAberto()).toBe(false);
-    expect(produtoServiceMock.listar).toHaveBeenCalledTimes(2);
+    expect(produtoServiceMock.listarPaginado).toHaveBeenCalledTimes(2);
     expect(snackBarMock.open).toHaveBeenCalled();
   });
 
@@ -198,7 +207,7 @@ describe('ListaProdutos', () => {
     );
 
     expect(component.formularioAberto()).toBe(false);
-    expect(produtoServiceMock.listar).toHaveBeenCalledTimes(2);
+    expect(produtoServiceMock.listarPaginado).toHaveBeenCalledTimes(2);
   });
 
   it('não deve excluir um produto sem confirmação', () => {
@@ -223,19 +232,45 @@ describe('ListaProdutos', () => {
 
     expect(produtoServiceMock.excluir).toHaveBeenCalledWith(1);
     expect(component.excluindoId()).toBeNull();
-    expect(produtoServiceMock.listar).toHaveBeenCalledTimes(2);
+    expect(produtoServiceMock.listarPaginado).toHaveBeenCalledTimes(2);
     expect(snackBarMock.open).toHaveBeenCalled();
   });
 
   it('deve tratar erros ao carregar produtos', () => {
-    produtoServiceMock.listar.mockReturnValue(
-      throwError(() => new Error('API indisponível'))
+    produtoServiceMock.listarPaginado.mockReturnValue(
+      throwError(() => new Error('Erro ao carregar produtos'))
     );
 
+    component.carregarProdutos();
     fixture.detectChanges();
 
     expect(component.erro()).toBe(true);
     expect(component.produtos()).toEqual([]);
     expect(component.carregando()).toBe(false);
+  });
+  
+  it('deve aplicar filtros e voltar para a primeira página', () => {
+    component.paginaAtual.set(2);
+
+    component.filtros.patchValue({
+      nome: 'Mouse',
+      ativo: 'ativos',
+      ordenarPor: 'preco',
+      direcao: 'desc'
+    });
+
+    component.aplicarFiltros();
+
+    expect(component.paginaAtual()).toBe(0);
+
+    expect(produtoServiceMock.listarPaginado).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        pagina: 1,
+        nome: 'Mouse',
+        ativo: true,
+        ordenarPor: 'preco',
+        direcao: 'desc'
+      })
+    );
   });
 });

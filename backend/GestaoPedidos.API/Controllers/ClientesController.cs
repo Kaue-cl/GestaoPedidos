@@ -56,4 +56,33 @@ public class ClientesController : ControllerBase
         await _clienteService.ExcluirAsync(id);
         return NoContent();
     }
+
+    [HttpGet("paginado")]
+    public async Task<IActionResult> ListarPaginado(
+        [FromQuery] FiltroClientesRequest filtro)
+    {
+        if (filtro.Pagina < 1 ||
+            filtro.TamanhoPagina < 1 ||
+            filtro.TamanhoPagina > 100)
+        {
+            return BadRequest(new
+            {
+                mensagem = "Parâmetros de paginação inválidos."
+            });
+        }
+
+        if (!new[] { "nome", "data" }.Contains(
+                filtro.OrdenarPor.ToLowerInvariant()) ||
+            !new[] { "asc", "desc" }.Contains(
+                filtro.Direcao.ToLowerInvariant()))
+        {
+            return BadRequest(new
+            {
+                mensagem = "Parâmetros de ordenação inválidos."
+            });
+        }
+
+        var resultado = await _clienteService.ListarPaginadoAsync(filtro);
+        return Ok(resultado);
+    }
 }

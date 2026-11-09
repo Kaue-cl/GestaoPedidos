@@ -116,6 +116,63 @@
     </mat-card>
   }
 
+  <mat-card class="filtros-card">
+    <mat-card-content>
+      <form
+        [formGroup]="filtros"
+        (ngSubmit)="aplicarFiltros()">
+
+        <div class="filtros-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Buscar por nome</mat-label>
+            <input matInput formControlName="nome">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Situação</mat-label>
+            <mat-select formControlName="ativo">
+              <mat-option value="todos">Todos</mat-option>
+              <mat-option value="ativos">Ativos</mat-option>
+              <mat-option value="inativos">Inativos</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Ordenar por</mat-label>
+            <mat-select formControlName="ordenarPor">
+              <mat-option value="nome">Nome</mat-option>
+              <mat-option value="preco">Preço</mat-option>
+              <mat-option value="estoque">Estoque</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Direção</mat-label>
+            <mat-select formControlName="direcao">
+              <mat-option value="asc">Crescente</mat-option>
+              <mat-option value="desc">Decrescente</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filtros-acoes">
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="limparFiltros()">
+            Limpar filtros
+          </button>
+
+          <button mat-flat-button type="submit">
+            <mat-icon>search</mat-icon>
+            Filtrar
+          </button>
+        </div>
+
+      </form>
+    </mat-card-content>
+  </mat-card>
+
   <mat-card class="tabela-card">
     <mat-card-content>
 
@@ -138,7 +195,7 @@
       } @else if (produtos().length === 0) {
         <div class="estado">
           <mat-icon>inventory_2</mat-icon>
-          <p>Nenhum produto cadastrado.</p>
+          <p>Nenhum produto encontrado para os filtros selecionados.</p>
         </div>
       } @else {
         <div class="tabela-container">
@@ -215,6 +272,15 @@
       }
 
     </mat-card-content>
+    <mat-paginator
+      [length]="totalRegistros()"
+      [pageIndex]="paginaAtual()"
+      [pageSize]="tamanhoPagina()"
+      [pageSizeOptions]="[5, 10, 25]"
+      [showFirstLastButtons]="true"
+      aria-label="Paginação de produtos"
+      (page)="alterarPagina($event)">
+    </mat-paginator>
   </mat-card>
 
 </div>

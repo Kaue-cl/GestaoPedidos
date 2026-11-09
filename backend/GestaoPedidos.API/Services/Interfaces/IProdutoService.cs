@@ -1,4 +1,5 @@
 using GestaoPedidos.API.DTOs.Produtos;
+using GestaoPedidos.API.DTOs.Common;
 
 namespace GestaoPedidos.API.Services.Interfaces;
 
@@ -18,4 +19,7 @@ public interface IProdutoService
     Task ExcluirAsync(int id);
 
     Task<int> ConsultarEstoqueAsync(int id);
+
+    Task<PaginacaoResponse<ProdutoResponse>> ListarPaginadoAsync(
+        FiltroProdutosRequest filtro);
 }
