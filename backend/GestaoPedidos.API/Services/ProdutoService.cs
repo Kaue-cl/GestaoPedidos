@@ -68,7 +68,9 @@ public class ProdutoService : IProdutoService
         if (produto is null)
             throw new ProdutoNaoEncontradoException(id);
 
-        await _produtoRepository.ExcluirAsync(produto);
+        produto.Ativo = false;
+
+        await _produtoRepository.AtualizarAsync(produto);
     }
 
     public async Task<int> ConsultarEstoqueAsync(int id)
