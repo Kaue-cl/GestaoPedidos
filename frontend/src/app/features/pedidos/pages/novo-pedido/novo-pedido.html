@@ -1,0 +1,165 @@
+
+<div class="novo-pedido-container">
+
+  <div class="pagina-header">
+    <div>
+      <h1>Novo pedido</h1>
+      <p>Selecione o cliente e adicione os produtos.</p>
+    </div>
+
+    <a mat-stroked-button routerLink="/pedidos">
+      <mat-icon>arrow_back</mat-icon>
+      Voltar
+    </a>
+  </div>
+
+  @if (carregando()) {
+    <div class="feedback-container">
+      <mat-spinner diameter="40" />
+      <p>Carregando clientes e produtos...</p>
+    </div>
+  } @else if (erroCarregamento()) {
+    <div class="feedback-container">
+      <mat-icon>error_outline</mat-icon>
+      <h2>Erro ao carregar os dados</h2>
+      <button mat-stroked-button (click)="carregarDados()">
+        Tentar novamente
+      </button>
+    </div>
+  } @else {
+
+    <mat-card>
+      <mat-card-content>
+
+        <div class="formulario">
+
+          <h2>Cliente</h2>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Selecione um cliente</mat-label>
+
+            <mat-select [formControl]="formulario.controls.clienteId">
+              @for (cliente of clientes(); track cliente.id) {
+                <mat-option [value]="cliente.id">
+                  {{ cliente.nome }} — {{ cliente.email }}
+                </mat-option>
+              }
+            </mat-select>
+
+            @if (formulario.controls.clienteId.invalid &&
+                 formulario.controls.clienteId.touched) {
+              <mat-error>Selecione um cliente.</mat-error>
+            }
+          </mat-form-field>
+
+          <h2>Adicionar produtos</h2>
+
+          <div class="produto-form">
+
+            <mat-form-field appearance="outline">
+              <mat-label>Produto</mat-label>
+
+              <mat-select [formControl]="formulario.controls.produtoId">
+                @for (produto of produtosDisponiveis(); track produto.id) {
+                  <mat-option [value]="produto.id">
+                    {{ produto.nome }}
+                    — {{ produto.preco | currency:'BRL' }}
+                    (Estoque: {{ produto.estoqueAtual }})
+                  </mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Quantidade</mat-label>
+
+              <input
+                matInput
+                type="number"
+                min="1"
+                step="1"
+                [formControl]="formulario.controls.quantidade">
+
+              <mat-error>Informe uma quantidade válida.</mat-error>
+            </mat-form-field>
+
+            <button
+              mat-flat-button
+              type="button"
+              (click)="adicionarItem()"
+              [disabled]="salvando() || produtosDisponiveis().length === 0">
+              <mat-icon>add</mat-icon>
+              Adicionar
+            </button>
+
+          </div>
+
+          <h2>Itens do pedido</h2>
+
+          @if (itens().length === 0) {
+            <div class="lista-vazia">
+              Nenhum produto adicionado.
+            </div>
+          } @else {
+
+            <div class="itens-lista">
+              @for (item of itens(); track item.produto.id) {
+                <div class="item-linha">
+                  <div class="item-descricao">
+                    <strong>{{ item.produto.nome }}</strong>
+                    <span>
+                      {{ item.quantidade }} ×
+                      {{ item.produto.preco | currency:'BRL' }}
+                    </span>
+                  </div>
+
+                  <strong>
+                    {{ item.subtotal | currency:'BRL' }}
+                  </strong>
+
+                  <button
+                    mat-icon-button
+                    type="button"
+                    aria-label="Remover produto"
+                    [disabled]="salvando()"
+                    (click)="removerItem(item.produto.id)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              }
+            </div>
+
+          }
+
+          <div class="total-container">
+            <span>Total do pedido</span>
+            <strong>{{ totalPedido() | currency:'BRL' }}</strong>
+          </div>
+
+          <div class="acoes">
+            <a mat-stroked-button routerLink="/pedidos">
+              Cancelar
+            </a>
+
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="salvando() || itens().length === 0"
+              (click)="criarPedido()">
+
+              @if (salvando()) {
+                Salvando...
+              } @else {
+                <mat-icon>check</mat-icon>
+                Criar pedido
+              }
+
+            </button>
+          </div>
+
+        </div>
+
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

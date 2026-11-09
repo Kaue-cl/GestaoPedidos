@@ -25,6 +25,12 @@ export const routes: Routes = [
             .then(m => m.ListaPedidos)
       },
       {
+        path: 'pedidos/novo',
+        loadComponent: () =>
+          import('./features/pedidos/pages/novo-pedido/novo-pedido')
+            .then(m => m.NovoPedido)
+      },
+      {
         path: 'clientes',
         loadComponent: () =>
           import('./features/clientes/pages/lista-clientes/lista-clientes')
@@ -35,7 +41,8 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/produtos/pages/lista-produtos/lista-produtos')
             .then(m => m.ListaProdutos)
-      }
+      },
+      
     ]
   },
   {
