@@ -310,14 +310,14 @@ Pedidos pendentes e cancelados não entram no cálculo do faturamento.
 
 ### Backend
 
-A partir da pasta `backend`, execute:
+A partir da raiz do projeto, acesse a pasta `backend` e execute:
 
 ```powershell
 cd backend
 dotnet test
 ```
 
-Durante o desenvolvimento, foram validados 25 testes automatizados no backend.
+A suíte de testes automatizados do backend contempla **40 testes**, incluindo validações de regras de negócio, operações de CRUD, gerenciamento de estoque, transições de status dos pedidos e tratamento de cenários inválidos.
 
 ### Frontend
 
@@ -327,7 +327,7 @@ Acesse a pasta `frontend` e execute:
 npm test -- --watch=false
 ```
 
-A suíte frontend contempla 42 testes, incluindo:
+A suíte frontend contempla **42 testes**, incluindo:
 
 - Inicialização da aplicação
 - Serviço HTTP de pedidos
@@ -349,6 +349,58 @@ O fluxo integrado foi validado manualmente, contemplando a criação de um produ
 Também foi verificada a atualização dos indicadores do dashboard após as operações.
 
 Adicionalmente, foi realizado um teste manual de concorrência utilizando duas abas do navegador, confirmando que o backend impede a venda de quantidades superiores ao estoque disponível.
+
+### Cobertura de testes do backend
+
+A cobertura dos testes automatizados do backend foi medida utilizando **Coverlet** e **ReportGenerator**.
+
+Os quatro Services de negócio alcançaram uma cobertura agregada de **72,4% das linhas executáveis**.
+
+| Service | Cobertura de linhas |
+|---|---:|
+| ClienteService | 77,1% |
+| DashboardService | 100% |
+| PedidoService | 68,0% |
+| ProdutoService | 76,7% |
+| **Cobertura agregada** | **72,4%** |
+
+A cobertura agregada corresponde a **207 de 286 linhas executáveis** dos Services de negócio.
+
+#### Como reproduzir a cobertura
+
+O projeto utiliza o pacote `coverlet.collector` para coletar a cobertura dos testes e o **ReportGenerator** para gerar o relatório HTML.
+
+O ReportGenerator está registrado como ferramenta local no arquivo `.config/dotnet-tools.json`, juntamente com o `dotnet-ef`.
+
+A instalação dessas ferramentas é realizada pelo comando `dotnet tool restore`, já apresentado na seção 6 deste README. Portanto, **não é necessária uma instalação global adicional do ReportGenerator**.
+
+A partir da pasta `backend`, execute:
+
+**1. Executar os testes e coletar a cobertura:**
+
+```powershell
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+**2. Gerar o relatório HTML:**
+
+```powershell
+dotnet tool run reportgenerator -- "-reports:GestaoPedidos.Tests/TestResults/**/coverage.cobertura.xml" "-targetdir:CoverageReport" "-reporttypes:Html"
+```
+
+**3. Abrir o relatório:**
+
+```powershell
+start CoverageReport/index.html
+```
+
+O relatório gerado estará disponível em:
+
+`backend/CoverageReport/index.html`
+
+As pastas `TestResults/` e `CoverageReport/` são geradas automaticamente e estão excluídas do versionamento pelo `.gitignore`.
+
+**Observação:** os percentuais apresentados consideram exclusivamente os quatro Services de negócio, e não a cobertura geral da API.
 
 ## 11. Tratamento de erros
 

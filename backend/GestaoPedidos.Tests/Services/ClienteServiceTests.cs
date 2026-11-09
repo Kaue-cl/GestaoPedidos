@@ -127,4 +127,130 @@ public class ClienteServiceTests
             r => r.ExcluirAsync(It.IsAny<Cliente>()),
             Times.Never);
     }
+        
+    [Fact]
+    public async Task Listar_ClientesExistentes_RetornaLista()
+    {
+        // Arrange
+        var clientes = new List<Cliente>
+        {
+            new Cliente
+            {
+                Id = 1,
+                Nome = "João Silva",
+                Email = "joao@exemplo.com"
+            },
+            new Cliente
+            {
+                Id = 2,
+                Nome = "Maria Souza",
+                Email = "maria@exemplo.com"
+            }
+        };
+
+        _repositoryMock
+            .Setup(r => r.ListarAsync())
+            .ReturnsAsync(clientes);
+
+        // Act
+        var resultado = await _service.ListarAsync();
+
+        // Assert
+        Assert.Equal(2, resultado.Count);
+        Assert.Equal("João Silva", resultado[0].Nome);
+        Assert.Equal("Maria Souza", resultado[1].Nome);
+
+        _repositoryMock.Verify(
+            r => r.ListarAsync(),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Atualizar_ClienteExistente_AtualizaDados()
+    {
+        // Arrange
+        var cliente = new Cliente
+        {
+            Id = 1,
+            Nome = "João Silva",
+            Email = "joao@exemplo.com",
+            Telefone = "11999990001"
+        };
+
+        var request = new AtualizarClienteRequest
+        {
+            Nome = "João Atualizado",
+            Email = "joao.novo@exemplo.com",
+            Telefone = "11988887777"
+        };
+
+        _repositoryMock
+            .Setup(r => r.ObterPorIdAsync(1))
+            .ReturnsAsync(cliente);
+
+        _repositoryMock
+            .Setup(r => r.EmailExisteAsync(request.Email, 1))
+            .ReturnsAsync(false);
+
+        // Act
+        var resultado = await _service.AtualizarAsync(1, request);
+
+        // Assert
+        Assert.Equal("João Atualizado", resultado.Nome);
+        Assert.Equal("joao.novo@exemplo.com", resultado.Email);
+        Assert.Equal("11988887777", resultado.Telefone);
+
+        _repositoryMock.Verify(
+            r => r.AtualizarAsync(It.IsAny<Cliente>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Excluir_ClienteExistente_ExcluiCliente()
+    {
+        // Arrange
+        var cliente = new Cliente
+        {
+            Id = 1,
+            Nome = "João Silva",
+            Email = "joao@exemplo.com"
+        };
+
+        _repositoryMock
+            .Setup(r => r.ObterPorIdAsync(1))
+            .ReturnsAsync(cliente);
+
+        // Act
+        await _service.ExcluirAsync(1);
+
+        // Assert
+        _repositoryMock.Verify(
+            r => r.ExcluirAsync(cliente),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task Atualizar_ClienteInexistente_LancaExcecao()
+    {
+        // Arrange
+        var request = new AtualizarClienteRequest
+        {
+            Nome = "Cliente Atualizado",
+            Email = "cliente@exemplo.com",
+            Telefone = "11999990000"
+        };
+
+        _repositoryMock
+            .Setup(r => r.ObterPorIdAsync(999))
+            .ReturnsAsync((Cliente?)null);
+
+        // Act e Assert
+        await Assert.ThrowsAsync<ClienteNaoEncontradoException>(
+            () => _service.AtualizarAsync(999, request));
+
+        _repositoryMock.Verify(
+            r => r.AtualizarAsync(It.IsAny<Cliente>()),
+            Times.Never);
+    }
+
 }

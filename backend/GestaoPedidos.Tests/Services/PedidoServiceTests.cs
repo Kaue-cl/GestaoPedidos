@@ -247,4 +247,148 @@ public class PedidoServiceTests
                 It.Is<Pedido>(p => p.Id == 1)),
             Times.Once);
     }
+    
+    [Fact]
+    public async Task Criar_SemItens_LancaExcecao()
+    {
+        var request = new CriarPedidoRequest
+        {
+            ClienteId = 1,
+            Itens = new List<CriarItemPedidoRequest>()
+        };
+
+        await Assert.ThrowsAsync<PedidoInvalidoException>(
+            () => _service.CriarAsync(request));
+
+        _pedidoRepository.Verify(
+            r => r.CriarComAtualizacaoEstoqueAsync(
+                It.IsAny<Pedido>(),
+                It.IsAny<List<Produto>>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Criar_ProdutoInativo_LancaExcecao()
+    {
+        ConfigurarClienteValido();
+
+        _produtoRepository
+            .Setup(r => r.ObterPorIdAsync(1))
+            .ReturnsAsync(new Produto
+            {
+                Id = 1,
+                Nome = "Produto Inativo",
+                Preco = 50m,
+                EstoqueAtual = 10,
+                Ativo = false
+            });
+
+        await Assert.ThrowsAsync<PedidoInvalidoException>(
+            () => _service.CriarAsync(CriarRequest()));
+
+        _pedidoRepository.Verify(
+            r => r.CriarComAtualizacaoEstoqueAsync(
+                It.IsAny<Pedido>(),
+                It.IsAny<List<Produto>>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Criar_ItensRepetidos_AgrupaQuantidades()
+    {
+        ConfigurarClienteValido();
+        ConfigurarProdutoValido(estoque: 10, preco: 20m);
+
+        var request = new CriarPedidoRequest
+        {
+            ClienteId = 1,
+            Itens = new List<CriarItemPedidoRequest>
+            {
+                new CriarItemPedidoRequest
+                {
+                    ProdutoId = 1,
+                    Quantidade = 2
+                },
+                new CriarItemPedidoRequest
+                {
+                    ProdutoId = 1,
+                    Quantidade = 3
+                }
+            }
+        };
+
+        var resultado = await _service.CriarAsync(request);
+
+        var item = Assert.Single(resultado.Itens);
+
+        Assert.Equal(5, item.Quantidade);
+        Assert.Equal(100m, resultado.ValorTotal);
+
+        _pedidoRepository.Verify(
+            r => r.CriarComAtualizacaoEstoqueAsync(
+                It.Is<Pedido>(p =>
+                    p.Itens.Count == 1 &&
+                    p.Itens.First().Quantidade == 5),
+                It.IsAny<List<Produto>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task AtualizarStatus_PedidoInexistente_LancaExcecao()
+    {
+        _pedidoRepository
+            .Setup(r => r.ObterPorIdAsync(999))
+            .ReturnsAsync((Pedido?)null);
+
+        var request = new AtualizarStatusPedidoRequest
+        {
+            Status = StatusPedido.Pago
+        };
+
+        await Assert.ThrowsAsync<PedidoNaoEncontradoException>(
+            () => _service.AtualizarStatusAsync(999, request));
+
+        _pedidoRepository.Verify(
+            r => r.AtualizarAsync(It.IsAny<Pedido>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Cancelar_PedidoPago_LancaExcecao()
+    {
+        var pedido = new Pedido
+        {
+            Id = 1,
+            ClienteId = 1,
+            Status = StatusPedido.Pago
+        };
+
+        _pedidoRepository
+            .Setup(r => r.ObterPorIdAsync(1))
+            .ReturnsAsync(pedido);
+
+        await Assert.ThrowsAsync<StatusPedidoInvalidoException>(
+            () => _service.CancelarAsync(1));
+
+        _pedidoRepository.Verify(
+            r => r.CancelarComDevolucaoEstoqueAsync(
+                It.IsAny<Pedido>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Cancelar_PedidoInexistente_LancaExcecao()
+    {
+        _pedidoRepository
+            .Setup(r => r.ObterPorIdAsync(999))
+            .ReturnsAsync((Pedido?)null);
+
+        await Assert.ThrowsAsync<PedidoNaoEncontradoException>(
+            () => _service.CancelarAsync(999));
+
+        _pedidoRepository.Verify(
+            r => r.CancelarComDevolucaoEstoqueAsync(
+                It.IsAny<Pedido>()),
+            Times.Never);
+    }
 }

@@ -194,4 +194,91 @@ public class ProdutoServiceTests
         // Assert
         Assert.Equal(12, estoque);
     }
+
+    [Fact]
+    public async Task Atualizar_ProdutoInexistente_LancaExcecao()
+    {
+        var request = new AtualizarProdutoRequest
+        {
+            Nome = "Produto Atualizado",
+            Preco = 100m,
+            EstoqueAtual = 10,
+            Ativo = true
+        };
+
+        _repositoryMock
+            .Setup(r => r.ObterPorIdAsync(999))
+            .ReturnsAsync((Produto?)null);
+
+        await Assert.ThrowsAsync<ProdutoNaoEncontradoException>(
+            () => _service.AtualizarAsync(999, request));
+
+        _repositoryMock.Verify(
+            r => r.AtualizarAsync(It.IsAny<Produto>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task Excluir_ProdutoInexistente_LancaExcecao()
+    {
+        _repositoryMock
+            .Setup(r => r.ObterPorIdAsync(999))
+            .ReturnsAsync((Produto?)null);
+
+        await Assert.ThrowsAsync<ProdutoNaoEncontradoException>(
+            () => _service.ExcluirAsync(999));
+
+        _repositoryMock.Verify(
+            r => r.AtualizarAsync(It.IsAny<Produto>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task ConsultarEstoque_ProdutoInexistente_LancaExcecao()
+    {
+        _repositoryMock
+            .Setup(r => r.ObterPorIdAsync(999))
+            .ReturnsAsync((Produto?)null);
+
+        await Assert.ThrowsAsync<ProdutoNaoEncontradoException>(
+            () => _service.ConsultarEstoqueAsync(999));
+    }
+
+    [Fact]
+    public async Task Listar_ProdutosExistentes_RetornaLista()
+    {
+        var produtos = new List<Produto>
+        {
+            new Produto
+            {
+                Id = 1,
+                Nome = "Notebook",
+                Preco = 3000m,
+                EstoqueAtual = 5,
+                Ativo = true
+            },
+            new Produto
+            {
+                Id = 2,
+                Nome = "Mouse",
+                Preco = 100m,
+                EstoqueAtual = 20,
+                Ativo = true
+            }
+        };
+
+        _repositoryMock
+            .Setup(r => r.ListarAsync())
+            .ReturnsAsync(produtos);
+
+        var resultado = await _service.ListarAsync();
+
+        Assert.Equal(2, resultado.Count);
+        Assert.Equal("Notebook", resultado[0].Nome);
+        Assert.Equal("Mouse", resultado[1].Nome);
+
+        _repositoryMock.Verify(
+            r => r.ListarAsync(),
+            Times.Once);
+    }
 }

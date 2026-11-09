@@ -45,3 +45,9 @@ frontend/yarn-error.log*
 # Arquivos locais
 frontend/.env.local
 frontend/.env.*.local
+
+
+# Relatórios de cobertura de testes
+**/CoverageReport/
+**/TestResults/
+**/coverage.cobertura.xml
