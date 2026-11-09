@@ -1,5 +1,4 @@
 using GestaoPedidos.API.DTOs.Produtos;
-using GestaoPedidos.API.Exceptions;
 using GestaoPedidos.API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,42 +19,26 @@ public class ProdutosController : ControllerBase
     public async Task<IActionResult> Listar()
     {
         var produtos = await _produtoService.ListarAsync();
-
         return Ok(produtos);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> ObterPorId(int id)
     {
-        try
-        {
-            var produto = await _produtoService.ObterPorIdAsync(id);
-
-            return Ok(produto);
-        }
-        catch (ProdutoNaoEncontradoException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
+        var produto = await _produtoService.ObterPorIdAsync(id);
+        return Ok(produto);
     }
 
     [HttpGet("{id:int}/estoque")]
     public async Task<IActionResult> ConsultarEstoque(int id)
     {
-        try
-        {
-            var estoque = await _produtoService.ConsultarEstoqueAsync(id);
+        var estoque = await _produtoService.ConsultarEstoqueAsync(id);
 
-            return Ok(new
-            {
-                ProdutoId = id,
-                EstoqueAtual = estoque
-            });
-        }
-        catch (ProdutoNaoEncontradoException ex)
+        return Ok(new
         {
-            return NotFound(new { mensagem = ex.Message });
-        }
+            produtoId = id,
+            estoqueAtual = estoque
+        });
     }
 
     [HttpPost]
@@ -75,32 +58,14 @@ public class ProdutosController : ControllerBase
         int id,
         [FromBody] AtualizarProdutoRequest request)
     {
-        try
-        {
-            var produto = await _produtoService.AtualizarAsync(
-                id,
-                request);
-
-            return Ok(produto);
-        }
-        catch (ProdutoNaoEncontradoException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
+        var produto = await _produtoService.AtualizarAsync(id, request);
+        return Ok(produto);
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Excluir(int id)
     {
-        try
-        {
-            await _produtoService.ExcluirAsync(id);
-
-            return NoContent();
-        }
-        catch (ProdutoNaoEncontradoException ex)
-        {
-            return NotFound(new { mensagem = ex.Message });
-        }
+        await _produtoService.ExcluirAsync(id);
+        return NoContent();
     }
 }

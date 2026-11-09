@@ -4,6 +4,7 @@ using GestaoPedidos.API.Repositories.Interfaces;
 using GestaoPedidos.API.Repositories;
 using GestaoPedidos.API.Services.Interfaces;
 using GestaoPedidos.API.Services;
+using GestaoPedidos.API.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +28,8 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
