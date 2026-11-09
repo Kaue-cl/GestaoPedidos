@@ -1,1 +1,182 @@
-<h1>Clientes</h1>
+
+<div class="pagina-clientes">
+
+  <div class="pagina-header">
+    <div>
+      <h1>Clientes</h1>
+      <p>Gerencie os clientes cadastrados no sistema.</p>
+    </div>
+
+    <button
+      mat-flat-button
+      type="button"
+      [disabled]="salvando() || excluindoId() !== null"
+      (click)="novoCliente()">
+      <mat-icon>person_add</mat-icon>
+      Novo cliente
+    </button>
+  </div>
+
+  @if (formularioAberto()) {
+    <mat-card class="formulario-card">
+      <mat-card-header>
+        <mat-card-title>
+          {{ clienteEmEdicao() === null ? 'Cadastrar cliente' : 'Editar cliente' }}
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form
+          [formGroup]="formulario"
+          (ngSubmit)="salvarCliente()">
+
+          <div class="formulario-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>Nome</mat-label>
+              <input
+                matInput
+                formControlName="nome"
+                maxlength="150">
+
+              @if (formulario.controls.nome.hasError('required')) {
+                <mat-error>Informe o nome.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>E-mail</mat-label>
+              <input
+                matInput
+                type="email"
+                formControlName="email">
+
+              @if (formulario.controls.email.hasError('required')) {
+                <mat-error>Informe o e-mail.</mat-error>
+              } @else if (formulario.controls.email.hasError('email')) {
+                <mat-error>Informe um e-mail válido.</mat-error>
+              }
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Telefone</mat-label>
+              <input
+                matInput
+                type="tel"
+                formControlName="telefone">
+
+              @if (formulario.controls.telefone.hasError('required')) {
+                <mat-error>Informe o telefone.</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="formulario-acoes">
+            <button
+              mat-stroked-button
+              type="button"
+              [disabled]="salvando()"
+              (click)="cancelarFormulario()">
+              Cancelar
+            </button>
+
+            <button
+              mat-flat-button
+              type="submit"
+              [disabled]="salvando() || formulario.invalid">
+              {{ salvando() ? 'Salvando...' : 'Salvar cliente' }}
+            </button>
+          </div>
+
+        </form>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <mat-card class="tabela-card">
+    <mat-card-content>
+
+      @if (carregando()) {
+        <div class="estado">
+          <mat-spinner diameter="36"></mat-spinner>
+          <p>Carregando clientes...</p>
+        </div>
+      } @else if (erro()) {
+        <div class="estado">
+          <mat-icon>error_outline</mat-icon>
+          <p>Não foi possível carregar os clientes.</p>
+          <button
+            mat-stroked-button
+            (click)="carregarClientes()">
+            Tentar novamente
+          </button>
+        </div>
+      } @else if (clientes().length === 0) {
+        <div class="estado">
+          <mat-icon>people_outline</mat-icon>
+          <p>Nenhum cliente cadastrado.</p>
+        </div>
+      } @else {
+        <div class="tabela-container">
+          <table mat-table [dataSource]="clientes()">
+
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef>ID</th>
+              <td mat-cell *matCellDef="let cliente">
+                #{{ cliente.id }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="nome">
+              <th mat-header-cell *matHeaderCellDef>Nome</th>
+              <td mat-cell *matCellDef="let cliente">
+                {{ cliente.nome }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>E-mail</th>
+              <td mat-cell *matCellDef="let cliente">
+                {{ cliente.email }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="telefone">
+              <th mat-header-cell *matHeaderCellDef>Telefone</th>
+              <td mat-cell *matCellDef="let cliente">
+                {{ cliente.telefone }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="acoes">
+              <th mat-header-cell *matHeaderCellDef>Ações</th>
+              <td mat-cell *matCellDef="let cliente">
+                <div class="acoes-tabela">
+                  <button
+                    mat-icon-button
+                    aria-label="Editar cliente"
+                    [disabled]="excluindoId() !== null || salvando()"
+                    (click)="editarCliente(cliente)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+
+                  <button
+                    mat-icon-button
+                    aria-label="Excluir cliente"
+                    [disabled]="excluindoId() !== null || salvando()"
+                    (click)="excluirCliente(cliente)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="colunasExibidas"></tr>
+            <tr mat-row *matRowDef="let row; columns: colunasExibidas"></tr>
+          </table>
+        </div>
+      }
+
+    </mat-card-content>
+  </mat-card>
+
+</div>
