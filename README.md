@@ -32,6 +32,7 @@ Desenvolvido como parte de um teste técnico Full Stack, utilizando **ASP.NET Co
 - Edição de informações
 - Exclusão com confirmação
 - Validação dos campos obrigatórios e do e-mail
+- Paginação, busca por nome/e-mail e ordenação por nome/data de cadastro
 
 ### Produtos
 - Cadastro e edição de produtos
@@ -39,6 +40,7 @@ Desenvolvido como parte de um teste técnico Full Stack, utilizando **ASP.NET Co
 - Controle de estoque
 - Ativação e desativação de produtos
 - Exclusão com confirmação
+- Paginação, busca por nome, filtro de situação (ativo/inativo) e ordenação por nome/preço/estoque
 
 ### Pedidos
 - Criação de pedidos vinculados a clientes
@@ -63,6 +65,15 @@ Desenvolvido como parte de um teste técnico Full Stack, utilizando **ASP.NET Co
 
 ## 3. Arquitetura
 
+```mermaid
+flowchart TD
+    A[Angular 21 - Frontend] -->|HTTP / JSON| B[ASP.NET Core 10 - Controllers]
+    B --> C[Services - Regras de negócio]
+    C --> D[Repositories]
+    D --> E[Entity Framework Core]
+    E --> F[(SQLite)]
+```
+
 O backend utiliza uma arquitetura em camadas:
 
 **Controller → Service → Repository → Banco de dados**
@@ -80,29 +91,58 @@ O frontend utiliza componentes standalone, organizados por funcionalidade, com s
 
 ```text
 GestaoPedidos/
+├── .config/
+│   └── dotnet-tools.json
 ├── backend/
-│   └── GestaoPedidos.API/
-│       ├── Controllers/
-│       ├── Services/
-│       ├── Repositories/
-│       ├── Data/
-│       ├── Entities/
-│       ├── DTOs/
-│       ├── Middleware/
-│       └── Program.cs
+│   ├── GestaoPedidos.slnx
+│   ├── GestaoPedidos.API/
+│   │   ├── Controllers/
+│   │   ├── Data/
+│   │   ├── DTOs/
+│   │   │   ├── Clientes/
+│   │   │   ├── Common/
+│   │   │   ├── Dashboard/
+│   │   │   ├── Pedidos/
+│   │   │   └── Produtos/
+│   │   ├── Entities/
+│   │   ├── Enums/
+│   │   ├── Exceptions/
+│   │   ├── Mappers/
+│   │   ├── Middlewares/
+│   │   ├── Migrations/
+│   │   ├── Repositories/
+│   │   │   └── Interfaces/
+│   │   ├── Services/
+│   │   │   └── Interfaces/
+│   │   ├── Validators/
+│   │   └── Program.cs
+│   └── GestaoPedidos.Tests/
+│       ├── Integration/
+│       └── Services/
 ├── frontend/
-│   └── src/
-│       └── app/
-│           ├── core/
-│           ├── shared/
-│           └── features/
-│               ├── clientes/
-│               ├── produtos/
-│               ├── pedidos/
-│               └── dashboard/
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── core/
+│   │   │   │   ├── interceptors/
+│   │   │   │   ├── models/
+│   │   │   │   └── services/
+│   │   │   ├── features/
+│   │   │   │   ├── clientes/
+│   │   │   │   ├── dashboard/
+│   │   │   │   ├── pedidos/
+│   │   │   │   └── produtos/
+│   │   │   └── shared/
+│   │   │       └── components/
+│   │   └── environments/
+│   ├── angular.json
+│   └── package.json
 ├── .gitignore
 └── README.md
 ```
+
+O backend segue a separação em camadas de Controllers, Services e Repositories. Os testes automatizados ficam em um projeto independente, `GestaoPedidos.Tests`, organizados em testes de integração e testes de serviços.
+
+O frontend utiliza uma organização por funcionalidades, separando páginas, modelos e serviços, além de componentes compartilhados e recursos comuns da aplicação.
 
 ## 5. Pré-requisitos
 
@@ -118,7 +158,13 @@ O banco de dados utilizado é o SQLite, portanto não é necessário instalar um
 
 ## 6. Executando o backend
 
-Abra um terminal na pasta do projeto da API:
+Abra um terminal na raiz do repositório e restaure as ferramentas locais do .NET:
+
+```powershell
+dotnet tool restore
+```
+
+Acesse a pasta do projeto da API:
 
 ```powershell
 cd backend/GestaoPedidos.API
@@ -136,6 +182,16 @@ Aplique as migrations do Entity Framework Core:
 dotnet ef database update
 ```
 
+### Migrations e dados iniciais (Seed)
+
+O projeto utiliza Entity Framework Core com SQLite para persistência dos dados.
+
+A estrutura do banco de dados e os dados iniciais são configurados por meio das migrations. Ao executar `dotnet ef database update`, o Entity Framework Core aplica as migrations pendentes, incluindo `SeedClientesProdutos`.
+
+Essa migration insere automaticamente três clientes e cinco produtos de exemplo, com preços, estoques e situações iniciais definidos, permitindo testar a aplicação sem a necessidade de cadastrar todos os registros manualmente.
+
+As migrations e o seed são executados pelo comando de atualização do banco, não automaticamente ao iniciar a API. Em um banco já atualizado, o comando não reaplica a migration de seed.
+
 Execute a aplicação:
 
 ```powershell
@@ -145,6 +201,10 @@ dotnet run
 Na configuração de desenvolvimento utilizada neste projeto, a API é executada em:
 
 `http://localhost:5245`
+
+Swagger:
+
+`http://localhost:5245/swagger`
 
 A documentação interativa dos endpoints pode ser consultada pelo Swagger, quando habilitado no ambiente de desenvolvimento.
 
@@ -189,6 +249,7 @@ Essa URL é definida no arquivo `frontend/src/environments/environment.ts`.
 | Método | Endpoint | Descrição |
 |---|---|---|
 | GET | `/api/clientes` | Listar clientes |
+| GET | `/api/clientes/paginado` | Listar clientes com paginação, filtros e ordenação |
 | GET | `/api/clientes/{id}` | Consultar cliente |
 | POST | `/api/clientes` | Cadastrar cliente |
 | PUT | `/api/clientes/{id}` | Atualizar cliente |
@@ -199,6 +260,7 @@ Essa URL é definida no arquivo `frontend/src/environments/environment.ts`.
 | Método | Endpoint | Descrição |
 |---|---|---|
 | GET | `/api/produtos` | Listar produtos |
+| GET | `/api/produtos/paginado` | Listar produtos com paginação, filtros e ordenação |
 | GET | `/api/produtos/{id}` | Consultar produto |
 | POST | `/api/produtos` | Cadastrar produto |
 | PUT | `/api/produtos/{id}` | Atualizar produto |
@@ -248,9 +310,10 @@ Pedidos pendentes e cancelados não entram no cálculo do faturamento.
 
 ### Backend
 
-Execute os testes a partir da solução ou projeto de testes correspondente:
+A partir da pasta `backend`, execute:
 
 ```powershell
+cd backend
 dotnet test
 ```
 
@@ -264,19 +327,28 @@ Acesse a pasta `frontend` e execute:
 npm test -- --watch=false
 ```
 
-A suíte frontend contempla 40 testes, incluindo:
+A suíte frontend contempla 42 testes, incluindo:
 
 - Inicialização da aplicação
 - Serviço HTTP de pedidos
 - Dashboard
 - Gerenciamento de produtos
 - Gerenciamento de clientes
+- Paginação e filtros de clientes e produtos
 
 Para validar a compilação de produção:
 
 ```powershell
 npm run build
 ```
+
+### Validação do fluxo integrado
+
+O fluxo integrado foi validado manualmente, contemplando a criação de um produto com estoque inicial de 5 unidades, a criação de um pedido com 3 unidades, a rejeição de uma segunda compra com quantidade superior ao estoque disponível e o cancelamento do primeiro pedido, com devolução das unidades ao estoque.
+
+Também foi verificada a atualização dos indicadores do dashboard após as operações.
+
+Adicionalmente, foi realizado um teste manual de concorrência utilizando duas abas do navegador, confirmando que o backend impede a venda de quantidades superiores ao estoque disponível.
 
 ## 11. Tratamento de erros
 
@@ -296,11 +368,46 @@ Os erros são tratados sem depender de dados simulados nas funcionalidades da ap
 - O RxJS é utilizado nas requisições HTTP e na atualização periódica do dashboard.
 - O Angular Material fornece componentes de interface reutilizáveis.
 
-## 13. Melhorias futuras
+
+## 13. Controle de concorrência e atomicidade dos pedidos
+
+Para evitar vendas acima do estoque disponível em operações simultâneas, o sistema utiliza atualizações condicionais diretamente no banco de dados, por meio do `ExecuteUpdateAsync` do Entity Framework Core.
+
+O desconto do estoque é realizado apenas quando o produto está ativo e possui quantidade suficiente. A operação utiliza a condição `EstoqueAtual >= Quantidade`, decrementando o saldo diretamente no banco. Caso nenhuma linha seja atualizada, a criação do pedido é interrompida.
+
+A criação do pedido e as atualizações de estoque são executadas dentro de uma transação explícita. Se alguma operação falhar, o sistema executa um rollback, impedindo a persistência parcial dos dados.
+
+O cancelamento segue o mesmo princípio: o status é atualizado condicionalmente de `Pendente` para `Cancelado`, e a devolução das quantidades ao estoque ocorre dentro da mesma transação. Isso impede a devolução duplicada em cancelamentos concorrentes.
+
+**Estratégia adotada:** atualização condicional atômica com transações de banco de dados, utilizando EF Core e SQLite.
+
+**Trade-off:** essa abordagem oferece consistência com baixa complexidade para a aplicação proposta. Em cenários de alta concorrência, o SQLite pode apresentar maior contenção de escrita, sendo recomendável avaliar um banco como PostgreSQL, além de políticas de retry para conflitos transitórios.
+
+
+## 14. Decisões de Design e Evolução da Arquitetura
+
+### 1. Escalabilidade
+
+**Se o sistema precisasse suportar 100 vezes mais pedidos por dia, o que mudaria na arquitetura?**
+
+Inicialmente, migraria o banco SQLite para PostgreSQL, que oferece melhores recursos para operações concorrentes e maior volume de transações. Manteria a separação entre Controllers, Services e Repositories, permitindo escalar horizontalmente a API. Também implementaria cache para consultas frequentes, especialmente os indicadores do dashboard, e avaliaria o uso de processamento assíncrono para operações não críticas.
+
+### 2. Resiliência e atomicidade
+
+**Como garantir que a criação de pedidos seja atômica e como tratar falhas parciais?**
+
+A implementação atual utiliza transações explícitas do Entity Framework Core para garantir que a criação do pedido e a atualização do estoque sejam concluídas conjuntamente. O estoque é atualizado por operações condicionais, evitando que requisições simultâneas consumam quantidades indisponíveis. Caso alguma etapa falhe, a transação é revertida por rollback, impedindo que um pedido seja persistido com estoque inconsistente. Para maior resiliência, adicionaria políticas de retry controladas para falhas transitórias, respeitando a segurança das operações.
+
+### 3. Evolução para notificações
+
+**Se fosse necessário enviar e-mails quando o status de um pedido mudasse, onde essa funcionalidade seria integrada?**
+
+Criaria uma interface `INotificacaoService` na camada de serviços, responsável por definir o contrato de envio de notificações, com uma implementação específica para e-mails. O `PedidoService` continuaria responsável pelas regras de negócio e acionaria o serviço de notificações após a atualização bem-sucedida do status no banco de dados. O envio seria tratado separadamente, com registro de erros, para que uma falha no e-mail não impedisse a atualização do pedido. Caso o sistema precisasse de maior confiabilidade, adicionaria uma tabela de notificações pendentes e um processo em segundo plano para tentar novamente os envios que falhassem.
+
+## 15. Melhorias futuras
 
 - Autenticação e autorização
 - Testes end-to-end
-- Paginação de clientes e produtos
 - Filtros adicionais nos relatórios
 - Atualizações em tempo real com SignalR
 - Containerização com Docker
