@@ -300,6 +300,12 @@ Ao criar um pedido, o sistema valida a disponibilidade dos produtos e desconta a
 
 Quando um pedido pendente é cancelado, as quantidades reservadas são devolvidas ao estoque.
 
+### Exclusão de clientes
+
+A exclusão de clientes é permitida apenas quando não existem pedidos associados. Essa restrição preserva a integridade do histórico de pedidos.
+
+Quando a exclusão é bloqueada, a API retorna HTTP 409 (Conflict), com uma mensagem explicativa apresentada ao usuário no frontend.
+
 ### Indicadores financeiros
 
 O faturamento total considera os pedidos com status Pago, Enviado ou Entregue.
@@ -317,7 +323,7 @@ cd backend
 dotnet test
 ```
 
-A suíte de testes automatizados do backend contempla **40 testes**, incluindo validações de regras de negócio, operações de CRUD, gerenciamento de estoque, transições de status dos pedidos e tratamento de cenários inválidos.
+Os testes automatizados do backend contemplam **41 testes**, incluindo validações de regras de negócio, operações de CRUD, gerenciamento de estoque, transições de status dos pedidos, restrições de exclusão de cliente e tratamento de cenários inválidos.
 
 ### Frontend
 
@@ -327,7 +333,7 @@ Acesse a pasta `frontend` e execute:
 npm test -- --watch=false
 ```
 
-A suíte frontend contempla **42 testes**, incluindo:
+Os testes automatizados do frontend contemplam **42 testes**, incluindo:
 
 - Inicialização da aplicação
 - Serviço HTTP de pedidos
