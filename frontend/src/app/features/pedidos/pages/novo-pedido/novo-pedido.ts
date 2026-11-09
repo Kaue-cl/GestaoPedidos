@@ -3,7 +3,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { forkJoin, finalize } from 'rxjs';
+import { forkJoin, finalize, switchMap, tap } from 'rxjs';
 
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -61,6 +61,7 @@ export class NovoPedido implements OnInit {
   readonly carregando = signal(false);
   readonly salvando = signal(false);
   readonly erroCarregamento = signal(false);
+  readonly atualizandoEstoque = signal(false);
 
   readonly formulario = this.fb.nonNullable.group({
     clienteId: [0, [Validators.required, Validators.min(1)]],
@@ -104,6 +105,25 @@ export class NovoPedido implements OnInit {
         }
       });
   }
+
+  atualizarEstoque(): void {
+  if (this.atualizandoEstoque() || this.salvando()) {
+    return;
+  }
+
+  this.atualizandoEstoque.set(true);
+
+  this.produtoService.listar()
+    .pipe(finalize(() => this.atualizandoEstoque.set(false)))
+    .subscribe({
+      next: produtos => {
+        this.produtos.set(produtos);
+      },
+      error: () => {
+        // O interceptor HTTP já apresenta o erro.
+      }
+    });
+}
 
   adicionarItem(): void {
     const produtoId = this.formulario.controls.produtoId.value;
@@ -149,6 +169,9 @@ export class NovoPedido implements OnInit {
       produtoId: 0,
       quantidade: 1
     });
+
+    this.formulario.controls.produtoId.markAsPristine();
+    this.formulario.controls.produtoId.markAsUntouched();
   }
 
   removerItem(produtoId: number): void {
@@ -158,6 +181,10 @@ export class NovoPedido implements OnInit {
   }
 
   criarPedido(): void {
+    if (this.salvando()) {
+      return;
+    }
+
     const clienteId = this.formulario.controls.clienteId.value;
 
     if (!this.clientes().some(cliente => cliente.id === clienteId)) {
@@ -174,18 +201,44 @@ export class NovoPedido implements OnInit {
       return;
     }
 
-    const pedido: CriarPedidoRequest = {
-      clienteId,
-      itens: this.itens().map(item => ({
-        produtoId: item.produto.id,
-        quantidade: item.quantidade
-      }))
-    };
-
     this.salvando.set(true);
 
-    this.pedidoService.criar(pedido)
-      .pipe(finalize(() => this.salvando.set(false)))
+    this.produtoService.listar()
+      .pipe(
+        tap(produtos => this.produtos.set(produtos)),
+        switchMap(produtos => {
+          const itensSelecionados = this.itens();
+
+          for (const item of itensSelecionados) {
+            const produtoAtual = produtos.find(
+              p => p.id === item.produto.id
+            );
+
+            if (!produtoAtual ||
+                !produtoAtual.ativo ||
+                produtoAtual.estoqueAtual < item.quantidade) {
+              this.snackBar.open(
+                `Estoque indisponível para "${item.produto.nome}". Atualize os itens do pedido.`,
+                'Fechar',
+                { duration: 5000 }
+              );
+
+              throw new Error('Estoque desatualizado');
+            }
+          }
+
+          const pedido: CriarPedidoRequest = {
+            clienteId,
+            itens: itensSelecionados.map(item => ({
+              produtoId: item.produto.id,
+              quantidade: item.quantidade
+            }))
+          };
+
+          return this.pedidoService.criar(pedido);
+        }),
+        finalize(() => this.salvando.set(false))
+      )
       .subscribe({
         next: () => {
           this.snackBar.open(
@@ -196,8 +249,14 @@ export class NovoPedido implements OnInit {
 
           this.router.navigate(['/pedidos']);
         },
-        error: () => {
-          // O interceptor HTTP já apresenta o erro retornado pela API.
+        error: erro => {
+          if (erro.message === 'Estoque desatualizado') {
+            return;
+          }
+
+          // O interceptor HTTP apresenta os erros da API.
+          // Atualiza o estoque caso outra requisição tenha consumido unidades.
+          this.atualizarEstoque();
         }
       });
   }
