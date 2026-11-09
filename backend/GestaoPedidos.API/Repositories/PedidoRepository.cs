@@ -3,6 +3,7 @@ using GestaoPedidos.API.Entities;
 using GestaoPedidos.API.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using GestaoPedidos.API.Exceptions;
+using GestaoPedidos.API.Enums;
 
 namespace GestaoPedidos.API.Repositories;
 
@@ -82,6 +83,37 @@ public class PedidoRepository : IPedidoRepository
             }
 
             await _context.Pedidos.AddAsync(pedido);
+
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    public async Task CancelarComDevolucaoEstoqueAsync(
+    Pedido pedido)
+    {
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            foreach (var item in pedido.Itens)
+            {
+                await _context.Produtos
+                    .Where(p => p.Id == item.ProdutoId)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(
+                            p => p.EstoqueAtual,
+                            p => p.EstoqueAtual + item.Quantidade));
+            }
+
+            pedido.Status = StatusPedido.Cancelado;
 
             await _context.SaveChangesAsync();
 

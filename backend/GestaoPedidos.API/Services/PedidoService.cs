@@ -122,32 +122,102 @@ public class PedidoService : IPedidoService
         return PedidoMapper.ParaResponse(pedido);
     }
 
-    public Task<PedidoResponse> ObterPorIdAsync(int id)
+    public async Task<PedidoResponse> ObterPorIdAsync(int id)
     {
-        throw new NotImplementedException();
+        var pedido = await _pedidoRepository.ObterPorIdAsync(id);
+
+        if (pedido is null)
+            throw new PedidoNaoEncontradoException(id);
+
+        return PedidoMapper.ParaResponse(pedido);
     }
 
-    public Task<List<PedidoResponse>> ListarAsync(
-        int pagina,
-        int tamanhoPagina)
+    public async Task<List<PedidoResponse>> ListarAsync(
+    int pagina,
+    int tamanhoPagina)
     {
-        throw new NotImplementedException();
+        if (pagina < 1 || tamanhoPagina < 1 || tamanhoPagina > 100)
+        {
+            throw new PedidoInvalidoException(
+                "A página deve ser maior que zero e o tamanho " +
+                "deve estar entre 1 e 100.");
+        }
+
+        var pedidos = await _pedidoRepository
+            .ListarAsync(pagina, tamanhoPagina);
+
+        return pedidos
+            .Select(PedidoMapper.ParaResponse)
+            .ToList();
     }
 
-    public Task<int> ContarAsync()
+    public async Task<int> ContarAsync()
     {
-        throw new NotImplementedException();
+        return await _pedidoRepository.ContarAsync();
     }
 
-    public Task<PedidoResponse> AtualizarStatusAsync(
-        int id,
-        AtualizarStatusPedidoRequest request)
+    public async Task<PedidoResponse> AtualizarStatusAsync(
+    int id,
+    AtualizarStatusPedidoRequest request)
     {
-        throw new NotImplementedException();
+        var pedido = await _pedidoRepository.ObterPorIdAsync(id);
+
+        if (pedido is null)
+            throw new PedidoNaoEncontradoException(id);
+
+        if (request is null || request.Status is null)
+        {
+            throw new StatusPedidoInvalidoException(
+                "Informe um status válido.");
+        }
+
+        var novoStatus = request.Status.Value;
+
+        bool transicaoValida = pedido.Status switch
+        {
+            StatusPedido.Pendente =>
+                novoStatus == StatusPedido.Pago,
+
+            StatusPedido.Pago =>
+                novoStatus == StatusPedido.Enviado,
+
+            StatusPedido.Enviado =>
+                novoStatus == StatusPedido.Entregue,
+
+            _ => false
+        };
+
+        if (!transicaoValida)
+        {
+            throw new StatusPedidoInvalidoException(
+                $"Não é permitido alterar o status " +
+                $"de {pedido.Status} para {novoStatus}.");
+        }
+
+        pedido.Status = novoStatus;
+
+        await _pedidoRepository.AtualizarAsync(pedido);
+
+        return PedidoMapper.ParaResponse(pedido);
     }
 
-    public Task<PedidoResponse> CancelarAsync(int id)
+    public async Task<PedidoResponse> CancelarAsync(int id)
     {
-        throw new NotImplementedException();
+        var pedido = await _pedidoRepository.ObterPorIdAsync(id);
+
+        if (pedido is null)
+            throw new PedidoNaoEncontradoException(id);
+
+        if (pedido.Status != StatusPedido.Pendente)
+        {
+            throw new StatusPedidoInvalidoException(
+                $"Não é permitido cancelar um pedido " +
+                $"com status {pedido.Status}.");
+        }
+
+        await _pedidoRepository
+            .CancelarComDevolucaoEstoqueAsync(pedido);
+
+        return PedidoMapper.ParaResponse(pedido);
     }
 }

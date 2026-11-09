@@ -19,4 +19,6 @@ public interface IPedidoRepository
     Task CriarComAtualizacaoEstoqueAsync(
         Pedido pedido,
         List<Produto> produtos);
+
+    Task CancelarComDevolucaoEstoqueAsync(Pedido pedido);
 }
