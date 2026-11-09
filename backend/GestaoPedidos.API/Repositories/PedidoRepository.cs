@@ -103,21 +103,40 @@ public class PedidoRepository : IPedidoRepository
 
         try
         {
+            var linhasAfetadas = await _context.Pedidos
+                .Where(p =>
+                    p.Id == pedido.Id &&
+                    p.Status == StatusPedido.Pendente)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(
+                        p => p.Status,
+                        StatusPedido.Cancelado));
+
+            if (linhasAfetadas == 0)
+            {
+                throw new StatusPedidoInvalidoException(
+                    "O pedido não está pendente ou já foi cancelado.");
+            }
+
             foreach (var item in pedido.Itens)
             {
-                await _context.Produtos
+                var produtosAtualizados = await _context.Produtos
                     .Where(p => p.Id == item.ProdutoId)
                     .ExecuteUpdateAsync(setters => setters
                         .SetProperty(
                             p => p.EstoqueAtual,
                             p => p.EstoqueAtual + item.Quantidade));
+
+                if (produtosAtualizados != 1)
+                {
+                    throw new PedidoInvalidoException(
+                        $"Não foi possível devolver o estoque do produto {item.ProdutoId}.");
+                }
             }
 
-            pedido.Status = StatusPedido.Cancelado;
-
-            await _context.SaveChangesAsync();
-
             await transaction.CommitAsync();
+
+            pedido.Status = StatusPedido.Cancelado;
         }
         catch
         {
