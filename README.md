@@ -350,21 +350,23 @@ Também foi verificada a atualização dos indicadores do dashboard após as ope
 
 Adicionalmente, foi realizado um teste manual de concorrência utilizando duas abas do navegador, confirmando que o backend impede a venda de quantidades superiores ao estoque disponível.
 
+Também foi validada a restrição de exclusão de clientes com pedidos associados. Nessa situação, a API retorna HTTP 409 (Conflict) com uma mensagem explicativa, apresentada ao usuário no frontend. Clientes sem pedidos associados podem ser excluídos normalmente.
+
 ### Cobertura de testes do backend
 
 A cobertura dos testes automatizados do backend foi medida utilizando **Coverlet** e **ReportGenerator**.
 
-Os quatro Services de negócio alcançaram uma cobertura agregada de **72,4% das linhas executáveis**.
+Os quatro Services de negócio alcançaram uma cobertura agregada de **73,5% das linhas executáveis**.
 
 | Service | Cobertura de linhas |
 |---|---:|
-| ClienteService | 77,1% |
+| ClienteService | 78,6% |
 | DashboardService | 100% |
 | PedidoService | 68,0% |
 | ProdutoService | 76,7% |
-| **Cobertura agregada** | **72,4%** |
+| **Cobertura agregada** | **73,5%** |
 
-A cobertura agregada corresponde a **207 de 286 linhas executáveis** dos Services de negócio.
+A cobertura agregada corresponde a **211 de 287 linhas executáveis** dos Services de negócio.
 
 #### Como reproduzir a cobertura
 

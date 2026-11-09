@@ -98,4 +98,9 @@ public class ClienteRepository : IClienteRepository
 
         return (clientes, totalRegistros);
     }
+    public async Task<bool> PossuiPedidosAsync(int clienteId)
+    {
+        return await _context.Pedidos
+            .AnyAsync(p => p.ClienteId == clienteId);
+    }
 }

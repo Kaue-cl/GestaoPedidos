@@ -206,7 +206,7 @@ public class ClienteServiceTests
     }
 
     [Fact]
-    public async Task Excluir_ClienteExistente_ExcluiCliente()
+    public async Task Excluir_ClienteSemPedidos_ExcluiCliente()
     {
         // Arrange
         var cliente = new Cliente
@@ -220,13 +220,57 @@ public class ClienteServiceTests
             .Setup(r => r.ObterPorIdAsync(1))
             .ReturnsAsync(cliente);
 
+        _repositoryMock
+            .Setup(r => r.PossuiPedidosAsync(1))
+            .ReturnsAsync(false);
+
         // Act
         await _service.ExcluirAsync(1);
 
         // Assert
         _repositoryMock.Verify(
+            r => r.PossuiPedidosAsync(1),
+            Times.Once);
+
+        _repositoryMock.Verify(
             r => r.ExcluirAsync(cliente),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task Excluir_ClienteComPedidos_LancaExcecao()
+    {
+        // Arrange
+        var cliente = new Cliente
+        {
+            Id = 2,
+            Nome = "Maria Souza",
+            Email = "maria@exemplo.com"
+        };
+
+        _repositoryMock
+            .Setup(r => r.ObterPorIdAsync(2))
+            .ReturnsAsync(cliente);
+
+        _repositoryMock
+            .Setup(r => r.PossuiPedidosAsync(2))
+            .ReturnsAsync(true);
+
+        // Act e Assert
+        var excecao = await Assert.ThrowsAsync<ClientePossuiPedidosException>(
+            () => _service.ExcluirAsync(2));
+
+        Assert.Equal(
+            "Não é possível excluir o cliente, pois existem pedidos associados a ele.",
+            excecao.Message);
+
+        _repositoryMock.Verify(
+            r => r.PossuiPedidosAsync(2),
+            Times.Once);
+
+        _repositoryMock.Verify(
+            r => r.ExcluirAsync(It.IsAny<Cliente>()),
+            Times.Never);
     }
 
     [Fact]

@@ -67,7 +67,14 @@ public class ClienteService : IClienteService
     {
         var cliente = await _repository.ObterPorIdAsync(id)
             ?? throw new ClienteNaoEncontradoException(id);
-    
+
+        var possuiPedidos = await _repository.PossuiPedidosAsync(id);
+
+        if (possuiPedidos)
+        {
+            throw new ClientePossuiPedidosException();
+        }
+
         await _repository.ExcluirAsync(cliente);
     }
 

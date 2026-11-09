@@ -21,6 +21,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { FiltroClientes } from '../../services/cliente.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { ClienteService } from '../../services/cliente.service';
 import {
@@ -198,29 +199,39 @@ export class ListaClientes implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(confirmado => {
-      if (confirmado !== true) {
-        return;
-      }
+  dialogRef.afterClosed().subscribe(confirmado => {
+    if (confirmado !== true) {
+      return;
+    }
 
-      this.excluindoId.set(cliente.id);
+    this.excluindoId.set(cliente.id);
 
-      this.clienteService.excluir(cliente.id)
-        .pipe(finalize(() => this.excluindoId.set(null)))
-        .subscribe({
-          next: () => {
-            this.snackBar.open(
-              'Cliente excluído com sucesso.',
-              'Fechar',
-              { duration: 3000 }
-            );
-            
-            this.paginaAtual.set(0);
-            this.carregarClientes();
-          }
-        });
-    });
-  }
+    this.clienteService.excluir(cliente.id)
+      .pipe(finalize(() => this.excluindoId.set(null)))
+      .subscribe({
+        next: () => {
+          this.snackBar.open(
+            'Cliente excluído com sucesso.',
+            'Fechar',
+            { duration: 3000 }
+          );
+
+          this.paginaAtual.set(0);
+          this.carregarClientes();
+        },
+        error: (erro: HttpErrorResponse) => {
+          const mensagem = erro.error?.mensagem
+            ?? 'Não foi possível excluir o cliente. Tente novamente.';
+
+          this.snackBar.open(
+            mensagem,
+            'Fechar',
+            { duration: 6000 }
+          );
+        }
+      });
+  });
+}
 
   aplicarFiltros(): void {
     this.paginaAtual.set(0);

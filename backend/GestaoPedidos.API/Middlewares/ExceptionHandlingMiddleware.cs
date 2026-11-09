@@ -37,6 +37,7 @@ public class ExceptionHandlingMiddleware
             ClienteNaoEncontradoException => StatusCodes.Status404NotFound,
             ProdutoNaoEncontradoException => StatusCodes.Status404NotFound,
             EmailJaCadastradoException => StatusCodes.Status409Conflict,
+            ClientePossuiPedidosException => StatusCodes.Status409Conflict,
             PedidoInvalidoException => StatusCodes.Status400BadRequest,
             EstoqueInsuficienteException => StatusCodes.Status409Conflict,
             PedidoNaoEncontradoException => StatusCodes.Status404NotFound,

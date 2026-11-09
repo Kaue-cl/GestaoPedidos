@@ -15,4 +15,5 @@ public interface IClienteRepository
         int? ignorarClienteId = null);
     Task<(List<Cliente> Dados, int TotalRegistros)> ListarPaginadoAsync(
         FiltroClientesRequest filtro);
+    Task<bool> PossuiPedidosAsync(int clienteId);
 }
