@@ -4,6 +4,25 @@ Sistema Full Stack para gerenciamento de clientes, produtos e pedidos, com contr
 
 Desenvolvido como parte de um teste técnico Full Stack, utilizando **ASP.NET Core 10**, **Angular 21**, **Entity Framework Core** e **SQLite**.
 
+## Sumário
+
+1. [Tecnologias utilizadas](#1-tecnologias-utilizadas) — Stack utilizada no backend, frontend e infraestrutura.
+2. [Funcionalidades](#2-funcionalidades) — Recursos de clientes, produtos, pedidos e dashboard.
+3. [Arquitetura](#3-arquitetura) — Organização em camadas e comunicação entre os componentes.
+4. [Estrutura do repositório](#4-estrutura-do-repositório) — Organização das pastas e arquivos do projeto.
+5. [Pré-requisitos](#5-pré-requisitos) — Ferramentas necessárias para executar a aplicação.
+6. [Executando com Docker Compose](#6-executando-com-docker-compose-recomendado) — Inicialização completa, persistência dos dados e comandos Docker.
+7. [Executando o backend](#7-executando-o-backend) — Configuração da API, migrations e execução local.
+8. [Executando o frontend](#8-executando-o-frontend) — Instalação das dependências e inicialização do Angular.
+9. [Endpoints principais](#9-endpoints-principais) — Rotas disponíveis para clientes, produtos, pedidos e dashboard.
+10. [Regras de negócio](#10-regras-de-negócio) — Fluxo de status, controle de estoque e validações.
+11. [Testes automatizados](#11-testes-automatizados) — Testes do backend e frontend, cobertura e validações.
+12. [Tratamento de erros](#12-tratamento-de-erros) — Tratamento de exceções e respostas HTTP.
+13. [Considerações técnicas](#13-considerações-técnicas) — Justificativas das tecnologias e abordagens adotadas.
+14. [Controle de concorrência e atomicidade dos pedidos](#14-controle-de-concorrência-e-atomicidade-dos-pedidos) — Transações e prevenção de inconsistências no estoque.
+15. [Decisões de Design e Evolução da Arquitetura](#15-decisões-de-design-e-evolução-da-arquitetura) — Escalabilidade, resiliência, notificações e trade-offs.
+16. [Melhorias futuras](#16-melhorias-futuras) — Possibilidades de evolução do sistema.
+
 ## 1. Tecnologias utilizadas
 
 ### Backend
