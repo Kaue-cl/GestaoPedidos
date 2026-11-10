@@ -60,7 +60,9 @@ public class ProdutoRepository : IProdutoRepository
         if (!string.IsNullOrWhiteSpace(filtro.Nome))
         {
             var nome = filtro.Nome.Trim();
-            query = query.Where(p => p.Nome.Contains(nome));
+
+            query = query.Where(p =>
+                EF.Functions.Like(p.Nome, $"%{nome}%"));
         }
 
         if (filtro.Ativo.HasValue)
