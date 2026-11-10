@@ -24,6 +24,12 @@ Desenvolvido como parte de um teste técnico Full Stack, utilizando **ASP.NET Co
 - Reactive Forms
 - Vitest
 
+### Infraestrutura
+- Docker e Docker Compose
+- Nginx
+- Docker multi-stage build
+- Volume persistente para SQLite
+
 ## 2. Funcionalidades
 
 ### Clientes
@@ -95,7 +101,9 @@ GestaoPedidos/
 │   └── dotnet-tools.json
 ├── backend/
 │   ├── GestaoPedidos.slnx
+│   ├── .dockerignore
 │   ├── GestaoPedidos.API/
+│   │   ├── Dockerfile
 │   │   ├── Controllers/
 │   │   ├── Data/
 │   │   ├── DTOs/
@@ -120,6 +128,9 @@ GestaoPedidos/
 │       ├── Integration/
 │       └── Services/
 ├── frontend/
+│   ├── Dockerfile
+│   ├── .dockerignore
+│   ├── nginx.conf
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── core/
@@ -136,6 +147,7 @@ GestaoPedidos/
 │   │   └── environments/
 │   ├── angular.json
 │   └── package.json
+├── compose.yaml
 ├── .gitignore
 └── README.md
 ```
@@ -146,7 +158,15 @@ O frontend utiliza uma organização por funcionalidades, separando páginas, mo
 
 ## 5. Pré-requisitos
 
-Para executar o projeto localmente, é necessário ter:
+### Execução com Docker (recomendada)
+
+- Docker Desktop com Docker Engine em execução
+- Docker Compose (incluído no Docker Desktop)
+
+Não é necessário instalar .NET SDK, Node.js, Angular CLI
+ou SQLite para executar a aplicação com Docker.
+
+### Execução local sem Docker
 
 - .NET SDK 10
 - Node.js 22 ou versão compatível com Angular 21
@@ -154,9 +174,142 @@ Para executar o projeto localmente, é necessário ter:
 - Angular CLI 21
 - Git
 
-O banco de dados utilizado é o SQLite, portanto não é necessário instalar um servidor de banco de dados.
+O banco de dados utilizado é o SQLite, portanto não é
+necessário instalar um servidor de banco de dados.
 
-## 6. Executando o backend
+## 6. Executando com Docker Compose (recomendado)
+
+A aplicação pode ser executada integralmente utilizando Docker Compose, sem necessidade de instalar ou configurar manualmente o .NET SDK, Node.js ou Angular CLI.
+
+O ambiente utiliza dois contêineres:
+
+- **Backend:** API ASP.NET Core 10, responsável pelas regras de negócio e pelo acesso ao SQLite.
+- **Frontend:** aplicação Angular 21 compilada para produção e servida pelo Nginx.
+
+O SQLite é armazenado em um volume Docker persistente, sem necessidade de um contêiner de banco de dados.
+
+### Iniciando a aplicação
+
+Com o Docker Desktop em execução, abra um terminal na raiz do repositório e execute:
+
+```powershell
+docker compose up --build
+```
+
+O comando constrói as imagens, cria a rede interna, configura o volume do banco de dados e inicia os serviços.
+
+Após a inicialização, acesse:
+
+| Serviço | Endereço |
+|---|---|
+| Frontend Angular | http://localhost:4200 |
+| API ASP.NET Core | http://localhost:5245 |
+| Swagger | http://localhost:5245/swagger |
+
+Para executar os contêineres em segundo plano:
+
+```powershell
+docker compose up --build -d
+```
+
+### Banco de dados e migrations
+
+O projeto utiliza SQLite com Entity Framework Core.
+
+Na execução via Docker, as migrations são aplicadas automaticamente durante a inicialização do backend, por meio da configuração `Database__ApplyMigrations=true`.
+
+Na primeira execução, o banco é criado e as migrations pendentes são aplicadas, incluindo a migration `SeedClientesProdutos`, que cadastra três clientes e cinco produtos de exemplo.
+
+O banco é armazenado no caminho `/app/data/gestaopedidos.db` dentro do contêiner, utilizando o volume Docker `gestaopedidos-data`.
+
+Os dados são preservados mesmo quando os contêineres são removidos e recriados.
+
+### Comunicação entre frontend e backend
+
+O frontend utiliza o Nginx como servidor web e proxy reverso.
+
+As requisições para `/api` são encaminhadas internamente para o serviço `backend` na porta `8080`.
+
+Essa configuração permite que o frontend e o backend se comuniquem pela rede interna do Docker Compose, sem depender de URLs fixas no código de produção do Angular.
+
+Na execução local sem Docker, o Angular continua utilizando `http://localhost:5245/api`.
+
+### Comandos úteis
+
+**Consultar os contêineres:**
+
+```powershell
+docker compose ps
+```
+
+**Consultar os logs:**
+
+```powershell
+docker compose logs -f
+```
+
+**Consultar apenas os logs do backend:**
+
+```powershell
+docker compose logs -f backend
+```
+
+**Parar os serviços sem remover os contêineres:**
+
+```powershell
+docker compose stop
+```
+
+**Reiniciar os serviços:**
+
+```powershell
+docker compose start
+```
+
+**Parar e remover os contêineres:**
+
+```powershell
+docker compose down
+```
+
+**Reconstruir as imagens e iniciar novamente:**
+
+```powershell
+docker compose up --build -d
+```
+
+### Persistência dos dados
+
+O volume `gestaopedidos-data` mantém os dados do SQLite independentemente do ciclo de vida dos contêineres.
+
+O comando `docker compose down` não remove esse volume.
+
+**Atenção:** executar `docker compose down -v` remove os volumes declarados no Compose, incluindo o banco SQLite persistido, ocasionando perda dos dados armazenados nesse volume.
+
+A persistência foi validada manualmente após a remoção e recriação dos contêineres, confirmando a preservação de clientes, produtos, pedidos, estoque e indicadores do dashboard.
+
+### Validação da aplicação
+
+A execução integrada com Docker Compose foi validada contemplando:
+
+- Cadastro de clientes e produtos.
+- Criação de pedidos.
+- Desconto automático do estoque.
+- Rejeição de pedidos com estoque insuficiente.
+- Cancelamento de pedidos e devolução ao estoque.
+- Atualização dos indicadores do dashboard.
+- Bloqueio da exclusão de clientes com pedidos associados.
+- Persistência dos dados após recriação dos contêineres.
+
+Todos esses cenários foram executados com sucesso.
+
+### Execução sem Docker
+
+O projeto também pode ser executado diretamente no ambiente de desenvolvimento.
+
+As instruções para iniciar o backend com `dotnet run` e o frontend com `npm start` estão documentadas nas seções seguintes.
+
+## 7. Executando o backend
 
 Abra um terminal na raiz do repositório e restaure as ferramentas locais do .NET:
 
@@ -190,7 +343,11 @@ A estrutura do banco de dados e os dados iniciais são configurados por meio das
 
 Essa migration insere automaticamente três clientes e cinco produtos de exemplo, com preços, estoques e situações iniciais definidos, permitindo testar a aplicação sem a necessidade de cadastrar todos os registros manualmente.
 
-As migrations e o seed são executados pelo comando de atualização do banco, não automaticamente ao iniciar a API. Em um banco já atualizado, o comando não reaplica a migration de seed.
+Na execução local sem Docker, as migrations são aplicadas manualmente por meio do comando `dotnet ef database update`.
+
+Na execução com Docker Compose, as migrations são aplicadas automaticamente durante a inicialização da API, utilizando a configuração `Database__ApplyMigrations=true`.
+
+As migrations já aplicadas não são executadas novamente, evitando a duplicação dos dados iniciais.
 
 Execute a aplicação:
 
@@ -210,7 +367,7 @@ A documentação interativa dos endpoints pode ser consultada pelo Swagger, quan
 
 O banco SQLite é utilizado para persistência de clientes, produtos e pedidos.
 
-## 7. Executando o frontend
+## 8. Executando o frontend
 
 Em outro terminal, acesse a pasta do Angular:
 
@@ -242,7 +399,7 @@ Essa URL é definida no arquivo `frontend/src/environments/environment.ts`.
 
 **Importante:** mantenha o backend em execução enquanto utiliza o frontend.
 
-## 8. Endpoints principais
+## 9. Endpoints principais
 
 ### Clientes
 
@@ -282,7 +439,7 @@ Essa URL é definida no arquivo `frontend/src/environments/environment.ts`.
 |---|---|---|
 | GET | `/api/dashboard` | Consultar indicadores operacionais |
 
-## 9. Regras de negócio
+## 10. Regras de negócio
 
 ### Fluxo de status
 
@@ -312,7 +469,7 @@ O faturamento total considera os pedidos com status Pago, Enviado ou Entregue.
 
 Pedidos pendentes e cancelados não entram no cálculo do faturamento.
 
-## 10. Testes automatizados
+## 11. Testes automatizados
 
 ### Backend
 
@@ -323,7 +480,11 @@ cd backend
 dotnet test
 ```
 
-Os testes automatizados do backend contemplam **41 testes**, incluindo validações de regras de negócio, operações de CRUD, gerenciamento de estoque, transições de status dos pedidos, restrições de exclusão de cliente e tratamento de cenários inválidos.
+Os testes automatizados do backend contemplam 46 testes, sendo 41 testes unitários e 5 testes de integração.
+
+Os testes unitários validam regras de negócio, operações de CRUD, gerenciamento de estoque, transições de status dos pedidos, restrições de exclusão de clientes e tratamento de cenários inválidos.
+
+Os testes de integração utilizam SQLite em memória para executar consultas reais do Entity Framework Core.
 
 ### Frontend
 
@@ -362,7 +523,7 @@ Também foi validada a restrição de exclusão de clientes com pedidos associad
 
 A cobertura dos testes automatizados do backend foi medida utilizando **Coverlet** e **ReportGenerator**.
 
-Os quatro Services de negócio alcançaram uma cobertura agregada de **73,5% das linhas executáveis**.
+Os quatro Services de negócio alcançaram uma cobertura agregada de **72,7% das linhas executáveis**.
 
 | Service | Cobertura de linhas |
 |---|---:|
@@ -370,9 +531,9 @@ Os quatro Services de negócio alcançaram uma cobertura agregada de **73,5% das
 | DashboardService | 100% |
 | PedidoService | 68,0% |
 | ProdutoService | 76,7% |
-| **Cobertura agregada** | **73,5%** |
+| **Cobertura agregada** | **72,7%** |
 
-A cobertura agregada corresponde a **211 de 287 linhas executáveis** dos Services de negócio.
+A cobertura agregada corresponde a **211 de 290 linhas executáveis** dos Services de negócio.
 
 #### Como reproduzir a cobertura
 
@@ -410,7 +571,7 @@ As pastas `TestResults/` e `CoverageReport/` são geradas automaticamente e est�
 
 **Observação:** os percentuais apresentados consideram exclusivamente os quatro Services de negócio, e não a cobertura geral da API.
 
-## 11. Tratamento de erros
+## 12. Tratamento de erros
 
 O backend possui tratamento centralizado de exceções, com respostas HTTP adequadas para erros de validação, recursos inexistentes e conflitos de negócio.
 
@@ -418,7 +579,7 @@ O frontend utiliza um interceptor HTTP para apresentar mensagens de erro ao usu�
 
 Os erros são tratados sem depender de dados simulados nas funcionalidades da aplicação.
 
-## 12. Considerações técnicas
+## 13. Considerações técnicas
 
 - O SQLite foi escolhido para simplificar a instalação e a execução local.
 - A arquitetura em camadas facilita a manutenção e a evolução das regras de negócio.
@@ -429,7 +590,7 @@ Os erros são tratados sem depender de dados simulados nas funcionalidades da ap
 - O Angular Material fornece componentes de interface reutilizáveis.
 
 
-## 13. Controle de concorrência e atomicidade dos pedidos
+## 14. Controle de concorrência e atomicidade dos pedidos
 
 Para evitar vendas acima do estoque disponível em operações simultâneas, o sistema utiliza atualizações condicionais diretamente no banco de dados, por meio do `ExecuteUpdateAsync` do Entity Framework Core.
 
@@ -444,7 +605,7 @@ O cancelamento segue o mesmo princípio: o status é atualizado condicionalmente
 **Trade-off:** essa abordagem oferece consistência com baixa complexidade para a aplicação proposta. Em cenários de alta concorrência, o SQLite pode apresentar maior contenção de escrita, sendo recomendável avaliar um banco como PostgreSQL, além de políticas de retry para conflitos transitórios.
 
 
-## 14. Decisões de Design e Evolução da Arquitetura
+## 15. Decisões de Design e Evolução da Arquitetura
 
 ### 1. Escalabilidade
 
@@ -464,11 +625,10 @@ A implementação atual utiliza transações explícitas do Entity Framework Cor
 
 Criaria uma interface `INotificacaoService` na camada de serviços, responsável por definir o contrato de envio de notificações, com uma implementação específica para e-mails. O `PedidoService` continuaria responsável pelas regras de negócio e acionaria o serviço de notificações após a atualização bem-sucedida do status no banco de dados. O envio seria tratado separadamente, com registro de erros, para que uma falha no e-mail não impedisse a atualização do pedido. Caso o sistema precisasse de maior confiabilidade, adicionaria uma tabela de notificações pendentes e um processo em segundo plano para tentar novamente os envios que falhassem.
 
-## 15. Melhorias futuras
+## 16. Melhorias futuras
 
-- Autenticação e autorização
-- Testes end-to-end
-- Filtros adicionais nos relatórios
-- Atualizações em tempo real com SignalR
-- Containerização com Docker
-- Pipeline de integração contínua
+- **Autenticação e autorização:** implementar autenticação de usuários e controle de acesso baseado em perfis (RBAC), permitindo definir diferentes níveis de permissão para administradores, gerentes e operadores.
+- **Auditoria de alterações:** registrar a data de criação e da última modificação em clientes, produtos e pedidos, incluindo a identificação do usuário responsável por cada operação.
+- **Histórico de auditoria:** implementar um registro detalhado das alterações realizadas no sistema, armazenando em uma tabela específica a entidade modificada, o tipo de operação (criação, atualização ou exclusão), os valores anteriores e novos, a data e o usuário responsável. Isso permitirá rastrear alterações e consultar o histórico completo de cada registro.
+- **Previsão de consumo de estoque:** calcular o consumo médio dos produtos com base no histórico de pedidos e estimar a quantidade necessária até o final do mês, emitindo alertas quando o estoque disponível estiver abaixo da demanda prevista.
+- **Testes end-to-end (E2E):** automatizar a validação dos principais fluxos da aplicação, simulando a interação do usuário desde o frontend até a persistência dos dados.
