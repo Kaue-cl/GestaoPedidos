@@ -611,7 +611,17 @@ O cancelamento segue o mesmo princípio: o status é atualizado condicionalmente
 
 **Se o sistema precisasse suportar 100 vezes mais pedidos por dia, o que mudaria na arquitetura?**
 
-Inicialmente, migraria o banco SQLite para PostgreSQL, que oferece melhores recursos para operações concorrentes e maior volume de transações. Manteria a separação entre Controllers, Services e Repositories, permitindo escalar horizontalmente a API. Também implementaria cache para consultas frequentes, especialmente os indicadores do dashboard, e avaliaria o uso de processamento assíncrono para operações não críticas.
+Inicialmente, migraria o banco de dados SQLite para PostgreSQL, que oferece melhores recursos para operações concorrentes e maior volume de transações.
+
+Aproveitaria a containerização já implementada com Docker para executar múltiplas instâncias do backend ASP.NET Core, utilizando um balanceador de carga, como o Nginx, para distribuir as requisições entre elas. Essa abordagem permitiria escalar horizontalmente a API conforme o aumento da demanda.
+
+Em um ambiente de produção, avaliaria a utilização de um orquestrador de containers, como Kubernetes, para automatizar o gerenciamento das instâncias, a recuperação de falhas e o escalonamento.
+
+Manteria a separação entre Controllers, Services e Repositories e implementaria cache distribuído, como Redis, para consultas frequentes, especialmente os indicadores do dashboard.
+
+Também avaliaria o processamento assíncrono de operações não críticas e o monitoramento de desempenho para identificar gargalos e dimensionar os recursos conforme a demanda.
+
+A consistência das operações de pedidos e estoque continuaria sendo garantida por transações e atualizações condicionais no banco de dados, independentemente da quantidade de instâncias da API.
 
 ### 2. Resiliência e atomicidade
 
