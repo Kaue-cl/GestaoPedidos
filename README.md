@@ -619,7 +619,7 @@ Em um ambiente de produção, avaliaria a utilização de um orquestrador de con
 
 Manteria a separação entre Controllers, Services e Repositories e implementaria cache distribuído, como Redis, para consultas frequentes, especialmente os indicadores do dashboard.
 
-Também avaliaria o processamento assíncrono de operações não críticas e o monitoramento de desempenho para identificar gargalos e dimensionar os recursos conforme a demanda.
+Também avaliaria o processamento em segundo plano de operações não críticas, como o envio de notificações e a geração de relatórios extensos, evitando aumentar o tempo de resposta das requisições. Complementaria essa abordagem com monitoramento de desempenho para identificar gargalos e dimensionar os recursos conforme a demanda.
 
 A consistência das operações de pedidos e estoque continuaria sendo garantida por transações e atualizações condicionais no banco de dados, independentemente da quantidade de instâncias da API.
 
@@ -634,6 +634,22 @@ A implementação atual utiliza transações explícitas do Entity Framework Cor
 **Se fosse necessário enviar e-mails quando o status de um pedido mudasse, onde essa funcionalidade seria integrada?**
 
 Criaria uma interface `INotificacaoService` na camada de serviços, responsável por definir o contrato de envio de notificações, com uma implementação específica para e-mails. O `PedidoService` continuaria responsável pelas regras de negócio e acionaria o serviço de notificações após a atualização bem-sucedida do status no banco de dados. O envio seria tratado separadamente, com registro de erros, para que uma falha no e-mail não impedisse a atualização do pedido. Caso o sistema precisasse de maior confiabilidade, adicionaria uma tabela de notificações pendentes e um processo em segundo plano para tentar novamente os envios que falhassem.
+
+### 4. Trade-offs considerados
+
+Durante o desenvolvimento, priorizei a simplicidade de execução, a consistência dos dados, a organização do código e a facilidade de manutenção, considerando o escopo do teste técnico.
+
+- **SQLite vs. PostgreSQL:** o SQLite simplifica a configuração e dispensa um servidor de banco de dados, mas possui limitações para operações com alta concorrência de escrita. O PostgreSQL seria mais adequado para um cenário de maior demanda.
+
+- **Docker Compose vs. orquestração de containers:** o Docker Compose permite executar a aplicação de forma padronizada com um único comando, mas não oferece nativamente escalabilidade automática, recuperação distribuída de falhas e gerenciamento avançado de múltiplas instâncias, recursos que poderiam ser atendidos por um orquestrador como Kubernetes.
+
+- **Arquitetura em camadas:** a separação entre Controllers, Services e Repositories aumenta a quantidade de arquivos e abstrações, mas facilita a manutenção, a testabilidade e a evolução das regras de negócio.
+
+- **Consultas diretas vs. cache:** o dashboard consulta os indicadores diretamente no banco, permitindo apresentar dados atualizados. Em cenários de alta demanda, o cache distribuído reduziria a carga de consultas, mas introduziria complexidade de invalidação e possível defasagem das informações.
+
+- **Consistência vs. desempenho:** a utilização de transações e atualizações condicionais garante a integridade dos pedidos e do estoque, mas pode aumentar a contenção de escrita em situações de alta concorrência.
+
+As decisões atuais buscam equilibrar simplicidade e confiabilidade, mantendo a possibilidade de evolução da arquitetura conforme o crescimento da aplicação.
 
 ## 16. Melhorias futuras
 
