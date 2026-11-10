@@ -1,0 +1,32 @@
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: GestaoPedidos.API/Dockerfile
+    image: gestaopedidos-api
+    ports:
+      - "5245:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Data Source=/app/data/gestaopedidos.db"
+      Database__ApplyMigrations: "true"
+    volumes:
+      - gestaopedidos-data:/app/data
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: gestaopedidos-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  gestaopedidos-data:
+    name: gestaopedidos-data

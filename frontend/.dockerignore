@@ -1,0 +1,12 @@
+
+node_modules
+dist
+.angular
+coverage
+coverage-report
+.git
+.gitignore
+Dockerfile
+.dockerignore
+README.md
+*.log

@@ -1,0 +1,15 @@
+
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/TestResults/
+**/Logs/
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/coverage/
+**/coverage.cobertura.xml
+**/coverage.opencover.xml
+**/coverage-report/
+.git/

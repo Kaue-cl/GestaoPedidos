@@ -62,17 +62,21 @@ public class ClienteRepository : IClienteRepository
     public async Task<(List<Cliente> Dados, int TotalRegistros)> ListarPaginadoAsync(FiltroClientesRequest filtro)
     {
         var query = _context.Clientes.AsNoTracking().AsQueryable();
-
+        
         if (!string.IsNullOrWhiteSpace(filtro.Nome))
         {
             var nome = filtro.Nome.Trim();
-            query = query.Where(c => c.Nome.Contains(nome));
+
+            query = query.Where(c =>
+                EF.Functions.Like(c.Nome, $"%{nome}%"));
         }
 
         if (!string.IsNullOrWhiteSpace(filtro.Email))
         {
             var email = filtro.Email.Trim();
-            query = query.Where(c => c.Email.Contains(email));
+
+            query = query.Where(c =>
+                EF.Functions.Like(c.Email, $"%{email}%"));
         }
 
         var totalRegistros = await query.CountAsync();
